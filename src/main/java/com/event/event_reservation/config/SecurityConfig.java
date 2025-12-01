@@ -2,13 +2,14 @@ package com.event.event_reservation.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
@@ -19,24 +20,57 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Autoriser librement la console H2 et les ressources nécessaires
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**", "/login", "/VAADIN/**", "/frontend/**").permitAll()
+                .authorizeHttpRequests(authorize -> authorize
+                        // ========== Pages PUBLIQUES (sans authentification) ==========
+                        .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/events", "/event/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // ========== Ressources Vaadin (CSS, JS, images) ==========
+                        .requestMatchers("/VAADIN/**", "/frontend/**", "/images/**", "/styles/**").permitAll()
+                        .requestMatchers("/sw.js", "/offline.html", "/icons/**", "/line-awesome/**").permitAll()
+
+                        // ========== Pages CLIENT (CLIENT, ORGANIZER, ADMIN) ==========
+                        .requestMatchers("/dashboard", "/my-reservations", "/profile", "/event/*/reserve")
+                        .hasAnyRole("CLIENT", "ORGANIZER", "ADMIN")
+
+                        // ========== Pages ORGANIZER (ORGANIZER, ADMIN) ==========
+                        .requestMatchers("/organizer/**")
+                        .hasAnyRole("ORGANIZER", "ADMIN")
+
+                        // ========== Pages ADMIN ==========
+                        .requestMatchers("/admin/**")
+                        .hasRole("ADMIN")
+
+                        // ========== Tout le reste nécessite authentification ==========
                         .anyRequest().authenticated()
                 )
 
-                // CSRF désactivé uniquement pour H2 console
+                // ========== CSRF Configuration ==========
+                // Vaadin gère CSRF lui-même, donc on désactive pour Vaadin
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
+                        .ignoringRequestMatchers("/VAADIN/**")
                 )
 
-                // Autoriser l'affichage dans des frames pour H2
+                // ========== Headers Configuration (pour H2 Console) ==========
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
+                        .frameOptions(frameOptions -> frameOptions.disable())
                 )
 
-                // Utiliser form login (page de login) au lieu de HTTP Basic -> pas de popup navigateur
-                .formLogin(Customizer.withDefaults());
+                // ========== Login Configuration ==========
+                .formLogin(formLogin -> formLogin
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .permitAll()
+                )
+
+                // ========== Logout Configuration ==========
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .permitAll()
+                );
 
         return http.build();
     }
