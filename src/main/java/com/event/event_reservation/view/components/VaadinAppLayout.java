@@ -18,8 +18,8 @@ import com.event.event_reservation.entity.enums.UserRole;
 
 /**
  * Layout principal de l'application avec menu de navigation
- * Ce layout sera réutilisé dans toutes les vues qui nécessitent un menu
-
+ * VERSION SIMPLIFIÉE - Pour les pages publiques uniquement
+ */
 public class VaadinAppLayout extends AppLayout {
 
     public VaadinAppLayout() {
@@ -29,7 +29,7 @@ public class VaadinAppLayout extends AppLayout {
 
     /**
      * Créer le header (barre supérieure)
-
+     */
     private void createHeader() {
         // Logo / Titre
         H1 logo = new H1("🎭 Event Reservation");
@@ -38,7 +38,7 @@ public class VaadinAppLayout extends AppLayout {
                 .set("font-size", "1.5em")
                 .set("color", "var(--lumo-primary-text-color)");
 
-        // Nom de l'utilisateur connecté
+        // Nom de l'utilisateur connecté (si connecté)
         Span userInfo = new Span();
         User currentUser = VaadinSession.getCurrentUser();
         if (currentUser != null) {
@@ -48,17 +48,23 @@ public class VaadinAppLayout extends AppLayout {
                     .set("margin-right", "1em");
         }
 
-        // Bouton Déconnexion
-        Button logoutButton = new Button("Déconnexion", VaadinIcon.SIGN_OUT.create());
-        logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        logoutButton.addClickListener(e -> handleLogout());
+        // Bouton Connexion ou Déconnexion
+        Button authButton;
+        if (VaadinSession.isUserLoggedIn()) {
+            authButton = new Button("Déconnexion", VaadinIcon.SIGN_OUT.create());
+            authButton.addClickListener(e -> handleLogout());
+        } else {
+            authButton = new Button("Connexion", VaadinIcon.SIGN_IN.create());
+            authButton.addClickListener(e -> NavigationManager.goToLogin());
+        }
+        authButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         // Layout du header
         HorizontalLayout header = new HorizontalLayout(
                 new DrawerToggle(),
                 logo,
                 userInfo,
-                logoutButton
+                authButton
         );
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
@@ -70,7 +76,7 @@ public class VaadinAppLayout extends AppLayout {
 
     /**
      * Créer le drawer (menu latéral)
-
+     */
     private void createDrawer() {
         VerticalLayout drawer = new VerticalLayout();
         drawer.setPadding(false);
@@ -89,19 +95,23 @@ public class VaadinAppLayout extends AppLayout {
                 drawer.add(new Hr());
             }
 
-            // Menu ORGANIZER (pour ORGANIZER, ADMIN)
+            // TODO: Menu ORGANIZER (commenté pour l'instant)
+            /*
             if (role == UserRole.ORGANIZER || role == UserRole.ADMIN) {
                 drawer.add(createSectionTitle("🎭 Organisateur"));
                 drawer.add(createOrganizerMenu());
                 drawer.add(new Hr());
             }
+            */
 
-            // Menu ADMIN (pour ADMIN uniquement)
+            // TODO: Menu ADMIN (commenté pour l'instant)
+            /*
             if (role == UserRole.ADMIN) {
                 drawer.add(createSectionTitle("🔐 Admin"));
                 drawer.add(createAdminMenu());
                 drawer.add(new Hr());
             }
+            */
         }
 
         // Menu PUBLIC (toujours visible)
@@ -164,9 +174,8 @@ public class VaadinAppLayout extends AppLayout {
         return menu;
     }
 
-    /**
-     * Créer le menu ORGANIZER
-
+    // TODO: Menu ORGANIZER (commenté pour l'instant)
+    /*
     private VerticalLayout createOrganizerMenu() {
         VerticalLayout menu = new VerticalLayout();
         menu.setPadding(false);
@@ -184,10 +193,10 @@ public class VaadinAppLayout extends AppLayout {
         menu.add(orgDashboardBtn, myEventsBtn, createEventBtn);
         return menu;
     }
+    */
 
-    /**
-     * Créer le menu ADMIN
-
+    // TODO: Menu ADMIN (commenté pour l'instant)
+    /*
     private VerticalLayout createAdminMenu() {
         VerticalLayout menu = new VerticalLayout();
         menu.setPadding(false);
@@ -208,6 +217,7 @@ public class VaadinAppLayout extends AppLayout {
         menu.add(adminDashboardBtn, userMgmtBtn, eventMgmtBtn, reservationMgmtBtn);
         return menu;
     }
+    */
 
     /**
      * Créer un bouton de menu stylisé
