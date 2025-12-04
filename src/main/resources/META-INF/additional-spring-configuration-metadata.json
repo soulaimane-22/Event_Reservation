@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "vaadin.productionMode",
+      "type": "java.lang.String",
+      "description": "Description for vaadin.productionMode."
+  }
+] }
