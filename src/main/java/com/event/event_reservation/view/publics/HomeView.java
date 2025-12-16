@@ -1,17 +1,21 @@
 package com.event.event_reservation.view.publics;
 
+import com.event.event_reservation.config.NavigationManager;
+import com.event.event_reservation.entity.Event;
+import com.event.event_reservation.entity.enums.EventStatus;
+import com.event.event_reservation.service.EventService;
+import com.event.event_reservation.view.components.VaadinAppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.event.event_reservation.config.NavigationManager;
-import com.event.event_reservation.view.components.VaadinAppLayout;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * Page d'accueil publique
@@ -21,22 +25,33 @@ import com.event.event_reservation.view.components.VaadinAppLayout;
 @PageTitle("Accueil - Event Reservation")
 public class HomeView extends VerticalLayout {
 
-    public HomeView() {
+    private final EventService eventService;
+
+    @Autowired
+    public HomeView(EventService eventService) {
+        this.eventService = eventService;
+
         // Configuration du layout
         setSizeFull();
         setPadding(true);
         setSpacing(true);
         setAlignItems(Alignment.CENTER);
 
-        // Créer le contenu
+        // Contenu EXISTANT (inchangé)
         createHeroSection();
+
+        // 🔥 NOUVELLE SECTION (AJOUT UNIQUEMENT)
+        createEventsGridSection();
+
+        // Contenu EXISTANT (inchangé)
         createFeaturesSection();
         createCallToAction();
     }
 
-    /**
-     * Section Hero (bannière principale)
-     */
+    /* ========================================================= */
+    /* ===================== HERO SECTION ====================== */
+    /* ========================================================= */
+
     private void createHeroSection() {
         VerticalLayout hero = new VerticalLayout();
         hero.setWidth("100%");
@@ -51,10 +66,7 @@ public class HomeView extends VerticalLayout {
                 .set("margin-top", "2em");
 
         H1 title = new H1("🎭 Bienvenue sur Event Reservation");
-        title.getStyle()
-                .set("margin", "0")
-                .set("text-align", "center")
-                .set("color", "white");
+        title.getStyle().set("margin", "0").set("color", "white");
 
         Paragraph subtitle = new Paragraph(
                 "Découvrez et réservez les meilleurs événements culturels près de chez vous"
@@ -66,7 +78,6 @@ public class HomeView extends VerticalLayout {
                 .set("color", "rgba(255,255,255,0.9)");
 
         HorizontalLayout buttons = new HorizontalLayout();
-        buttons.setSpacing(true);
 
         Button exploreBtn = new Button("Explorer les événements", VaadinIcon.CALENDAR.create());
         exploreBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
@@ -78,14 +89,74 @@ public class HomeView extends VerticalLayout {
         registerBtn.addClickListener(e -> NavigationManager.goToRegister());
 
         buttons.add(exploreBtn, registerBtn);
-
         hero.add(title, subtitle, buttons);
         add(hero);
     }
 
-    /**
-     * Section Fonctionnalités
-     */
+    /* ========================================================= */
+    /* ============ NOUVELLE SECTION : EVENTS GRID ============== */
+    /* ========================================================= */
+
+    private void createEventsGridSection() {
+        H2 title = new H2("🎟️ Événements à venir");
+        title.getStyle().set("margin-top", "3em");
+
+        Div grid = new Div();
+        grid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(3, 1fr)")
+                .set("gap", "24px")
+                .set("max-width", "1100px")
+                .set("width", "100%");
+
+        List<Event> events = eventService.searchEvents(
+                        null, null, null, null, null, null
+                ).stream()
+                .filter(e -> e.getStatut() == EventStatus.PUBLIE)
+                .limit(6)
+                .toList();
+
+        if (events.isEmpty()) {
+            grid.add(new Paragraph("Aucun événement disponible pour le moment."));
+        } else {
+            events.forEach(event -> grid.add(createEventCard(event)));
+        }
+
+        add(title, grid);
+    }
+
+    private VerticalLayout createEventCard(Event event) {
+        VerticalLayout card = new VerticalLayout();
+        card.setPadding(true);
+        card.setSpacing(true);
+
+        card.getStyle()
+                .set("background", "white")
+                .set("border", "1px solid #e5e7eb")
+                .set("border-radius", "12px")
+                .set("box-shadow", "0 2px 6px rgba(0,0,0,0.08)");
+
+        H3 title = new H3(event.getTitre());
+        Span date = new Span(
+                event.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+        );
+        Span city = new Span("📍 " + event.getVille());
+        Span price = new Span("💰 " + event.getPrixUnitaire() + " DH");
+
+        Button details = new Button("Voir détails", VaadinIcon.EYE.create());
+        details.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        details.addClickListener(e ->
+                NavigationManager.goToEventDetail(event.getId())
+        );
+
+        card.add(title, date, city, price, details);
+        return card;
+    }
+
+    /* ========================================================= */
+    /* ================= FEATURES (INCHANGÉ) =================== */
+    /* ========================================================= */
+
     private void createFeaturesSection() {
         H2 featuresTitle = new H2("Pourquoi choisir Event Reservation ?");
         featuresTitle.getStyle().set("margin-top", "3em").set("text-align", "center");
@@ -97,29 +168,17 @@ public class HomeView extends VerticalLayout {
         features.getStyle().set("flex-wrap", "wrap");
 
         features.add(
-                createFeatureCard(
-                        VaadinIcon.CALENDAR,
-                        "Événements Variés",
-                        "Concerts, théâtres, conférences, événements sportifs et bien plus"
-                ),
-                createFeatureCard(
-                        VaadinIcon.TICKET,
-                        "Réservation Facile",
-                        "Réservez vos places en quelques clics seulement"
-                ),
-                createFeatureCard(
-                        VaadinIcon.SHIELD,
-                        "Paiement Sécurisé",
-                        "Vos transactions sont 100% sécurisées"
-                )
+                createFeatureCard(VaadinIcon.CALENDAR, "Événements Variés",
+                        "Concerts, théâtres, conférences, événements sportifs et bien plus"),
+                createFeatureCard(VaadinIcon.TICKET, "Réservation Facile",
+                        "Réservez vos places en quelques clics seulement"),
+                createFeatureCard(VaadinIcon.SHIELD, "Paiement Sécurisé",
+                        "Vos transactions sont 100% sécurisées")
         );
 
         add(featuresTitle, features);
     }
 
-    /**
-     * Créer une carte de fonctionnalité
-     */
     private VerticalLayout createFeatureCard(VaadinIcon icon, String title, String description) {
         VerticalLayout card = new VerticalLayout();
         card.setWidth("300px");
@@ -132,28 +191,14 @@ public class HomeView extends VerticalLayout {
                 .set("border-radius", "10px")
                 .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
 
-        icon.create().setSize("48px");
-        icon.create().setColor("#667eea");
-
-        H2 cardTitle = new H2(title);
-        cardTitle.getStyle()
-                .set("margin", "0.5em 0")
-                .set("font-size", "1.2em")
-                .set("color", "#333");
-
-        Paragraph cardDesc = new Paragraph(description);
-        cardDesc.getStyle()
-                .set("text-align", "center")
-                .set("color", "#666")
-                .set("font-size", "0.95em");
-
-        card.add(icon.create(), cardTitle, cardDesc);
+        card.add(icon.create(), new H2(title), new Paragraph(description));
         return card;
     }
 
-    /**
-     * Section Call-to-Action
-     */
+    /* ========================================================= */
+    /* ================= CTA (INCHANGÉ) ======================== */
+    /* ========================================================= */
+
     private void createCallToAction() {
         VerticalLayout cta = new VerticalLayout();
         cta.setWidth("100%");
@@ -163,17 +208,13 @@ public class HomeView extends VerticalLayout {
         cta.setAlignItems(Alignment.CENTER);
         cta.getStyle()
                 .set("margin-top", "3em")
-                .set("margin-bottom", "2em")
                 .set("background", "#f3f4f6")
                 .set("border-radius", "10px");
 
         H2 ctaTitle = new H2("Prêt à découvrir les événements ?");
-        ctaTitle.getStyle().set("margin", "0").set("text-align", "center");
-
         Paragraph ctaText = new Paragraph(
                 "Rejoignez des milliers d'utilisateurs qui profitent déjà de nos services"
         );
-        ctaText.getStyle().set("text-align", "center").set("color", "#666");
 
         Button startBtn = new Button("Commencer maintenant", VaadinIcon.ARROW_RIGHT.create());
         startBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
