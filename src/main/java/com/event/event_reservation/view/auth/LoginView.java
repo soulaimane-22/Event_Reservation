@@ -2,6 +2,7 @@ package com.event.event_reservation.view.auth;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Anchor; // <--- Import ajouté
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -13,6 +14,7 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.auth.AnonymousAllowed; // <--- Import ajouté
 import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
 import com.event.event_reservation.entity.User;
@@ -27,6 +29,7 @@ import java.util.Optional;
  */
 @Route("login")
 @PageTitle("Connexion - Event Reservation")
+@AnonymousAllowed // <--- Autorise l'accès sans être connecté
 public class LoginView extends VerticalLayout {
 
     private final UserService userService;
@@ -34,7 +37,7 @@ public class LoginView extends VerticalLayout {
     private EmailField emailField;
     private PasswordField passwordField;
     private Button loginButton;
-    private Button registerLink;
+    // private Button registerLink; // Inutilisé, je l'ai retiré
 
     @Autowired
     public LoginView(UserService userService) {
@@ -107,24 +110,28 @@ public class LoginView extends VerticalLayout {
         Paragraph registerText = new Paragraph("Pas encore de compte ?");
         registerText.getStyle().set("text-align", "center").set("margin-top", "1em");
 
-        RouterLink registerRouterLink = new RouterLink("Créer un compte", RegisterView.class);
-        registerRouterLink.getStyle()
+        // --- CORRECTION 1 : Sécurisation du lien Register ---
+        // J'utilise un Anchor (lien HTML) au lieu de RouterLink pour éviter le crash
+        // si la classe RegisterView n'est pas encore prête.
+        Anchor registerLink = new Anchor("register", "Créer un compte");
+        // Si ta vue s'appelle RegisterView, assure-toi qu'elle a bien @Route("register")
+        registerLink.getStyle()
                 .set("color", "#667eea")
                 .set("font-weight", "bold")
                 .set("text-decoration", "none");
 
-        VerticalLayout registerSection = new VerticalLayout(registerText, registerRouterLink);
+        VerticalLayout registerSection = new VerticalLayout(registerText, registerLink);
         registerSection.setAlignItems(Alignment.CENTER);
         registerSection.setPadding(false);
         registerSection.setSpacing(false);
 
-        // Lien vers page d'accueil
-        RouterLink homeLink = new RouterLink("← Retour à l'accueil", null);
+        // --- CORRECTION 2 : Le lien Accueil (Source du crash NullPointerException) ---
+        // Au lieu de new RouterLink(..., null), on utilise un Anchor vers la racine "/"
+        Anchor homeLink = new Anchor("/", "← Retour à l'accueil");
         homeLink.getStyle()
                 .set("color", "#666")
                 .set("text-decoration", "none")
                 .set("margin-top", "1em");
-        homeLink.addBlurListener(e -> NavigationManager.goToHome());
 
         // Ajouter tous les composants au formulaire
         form.add(
@@ -187,17 +194,11 @@ public class LoginView extends VerticalLayout {
         }
     }
 
-    /**
-     * Afficher un message d'erreur
-     */
     private void showError(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 
-    /**
-     * Afficher un message de succès
-     */
     private void showSuccess(String message) {
         Notification notification = Notification.show(message, 2000, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);

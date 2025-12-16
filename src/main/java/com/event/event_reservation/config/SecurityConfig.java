@@ -21,51 +21,37 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        // ========== Pages PUBLIQUES (sans authentification) ==========
+                        // 1. TES PAGES PUBLIQUES (Explicitement autorisées comme demandé)
                         .requestMatchers("/", "/login", "/register").permitAll()
                         .requestMatchers("/events", "/event/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // ========== Ressources Vaadin (CSS, JS, images) ==========
+                        // 2. RESSOURCES VAADIN (Indispensable pour le style et le JS)
                         .requestMatchers("/VAADIN/**", "/frontend/**", "/images/**", "/styles/**").permitAll()
                         .requestMatchers("/sw.js", "/offline.html", "/icons/**", "/line-awesome/**").permitAll()
 
-                        // ========== Pages CLIENT (CLIENT, ORGANIZER, ADMIN) ==========
-                        .requestMatchers("/dashboard", "/my-reservations", "/profile", "/event/*/reserve")
-                        .hasAnyRole("CLIENT", "ORGANIZER", "ADMIN")
-
-                        // ========== Pages ORGANIZER (ORGANIZER, ADMIN) ==========
-                        .requestMatchers("/organizer/**")
-                        .hasAnyRole("ORGANIZER", "ADMIN")
-
-                        // ========== Pages ADMIN ==========
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
-
-                        // ========== Tout le reste nécessite authentification ==========
-                        .anyRequest().authenticated()
+                        // 3. LE RESTE (DEV MODE)
+                        // Au lieu de restreindre par rôle (ADMIN, CLIENT...), on laisse tout passer pour l'instant.
+                        // Quand tu voudras réactiver la sécurité, il suffira de changer cette ligne.
+                        .anyRequest().permitAll()
                 )
 
-                // ========== CSRF Configuration ==========
-                // Vaadin gère CSRF lui-même, donc on désactive pour Vaadin
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
-                        .ignoringRequestMatchers("/VAADIN/**")
-                )
+                // Désactivation CSRF pour éviter les conflits en local
+                .csrf(csrf -> csrf.disable())
 
-                // ========== Headers Configuration (pour H2 Console) ==========
+                // Autoriser l'affichage de la console H2 (frames)
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.disable())
                 )
 
-                // ========== Login Configuration ==========
+                // Configuration du Login (Toujours active pour tes tests d'UI)
                 .formLogin(formLogin -> formLogin
                         .loginPage("/login")
                         .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
 
-                // ========== Logout Configuration ==========
+                // Configuration du Logout
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
