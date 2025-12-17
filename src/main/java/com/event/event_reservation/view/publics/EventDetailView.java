@@ -23,7 +23,7 @@ import java.util.Optional;
  * Page de détails d'un événement
  * URL: /event/{id}
  */
-@Route(value = "event/:eventId", layout = VaadinAppLayout.class)
+@Route(value = "event", layout = VaadinAppLayout.class)
 @PageTitle("Détails Événement - Event Reservation")
 public class EventDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
@@ -44,7 +44,7 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
     }
 
     @Override
-    public void setParameter(BeforeEvent beforeEvent, @OptionalParameter Long parameter) {
+    public void setParameter(BeforeEvent beforeEvent, Long parameter) {
         if (parameter == null) {
             showError("Événement non trouvé");
             NavigationManager.goToEventList();
@@ -101,6 +101,21 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         statusBadge.getStyle().set("margin-left", "auto");
 
         header.add(title, statusBadge);
+
+        /* ================================================= */
+        /* ========== 🔥 AJOUT IMAGE EVENT (ICI) =========== */
+        /* ================================================= */
+        Image eventImage = new Image(
+                event.getImageUrl(),   // URL complète depuis la DB
+                event.getTitre()
+        );
+        eventImage.setWidthFull();
+        eventImage.setHeight("360px");
+        eventImage.getStyle()
+                .set("object-fit", "cover")
+                .set("border-radius", "8px")
+                .set("margin-top", "1em");
+        /* ================================================= */
 
         // Badge catégorie
         Span categoryBadge = new Span(event.getCategorie().toString());
@@ -169,6 +184,7 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         // Ajouter tous les composants à la card
         card.add(
                 header,
+                eventImage,      // 👈 image bien intégrée
                 categoryBadge,
                 new Hr(),
                 infoSection,
@@ -183,9 +199,8 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         add(card);
     }
 
-    /**
-     * Créer un badge de statut
-     */
+    /* =================== AUTRES MÉTHODES INCHANGÉES =================== */
+
     private Span createStatusBadge() {
         Span badge = new Span(event.getStatut().toString());
         badge.getElement().getThemeList().add("badge");
@@ -206,9 +221,6 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         return badge;
     }
 
-    /**
-     * Créer une ligne d'information
-     */
     private HorizontalLayout createInfoRow(VaadinIcon icon, String label, String value) {
         HorizontalLayout row = new HorizontalLayout();
         row.setSpacing(true);
@@ -230,15 +242,10 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         return row;
     }
 
-    /**
-     * Gérer la réservation
-     */
     private void handleReservation() {
         if (VaadinSession.isUserLoggedIn()) {
-            // Rediriger vers le formulaire de réservation
             NavigationManager.goToReservationForm(eventId);
         } else {
-            // Demander de se connecter
             Notification notification = Notification.show(
                     "Vous devez être connecté pour réserver",
                     3000,
@@ -246,7 +253,6 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
             );
             notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
 
-            // Rediriger vers login après 2 secondes
             getUI().ifPresent(ui -> ui.access(() -> {
                 try {
                     Thread.sleep(2000);
@@ -258,9 +264,6 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         }
     }
 
-    /**
-     * Obtenir la couleur selon la catégorie
-     */
     private String getCategoryColor(com.event.event_reservation.entity.enums.EventCategory category) {
         return switch (category) {
             case CONCERT -> "#8b5cf6";
@@ -271,9 +274,6 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         };
     }
 
-    /**
-     * Afficher un message d'erreur
-     */
     private void showError(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

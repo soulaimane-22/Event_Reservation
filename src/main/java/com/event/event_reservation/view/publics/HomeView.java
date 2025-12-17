@@ -39,18 +39,12 @@ public class HomeView extends VerticalLayout {
 
         // Contenu EXISTANT (inchangé)
         createHeroSection();
-
-        // 🔥 NOUVELLE SECTION (AJOUT UNIQUEMENT)
         createEventsGridSection();
-
-        // Contenu EXISTANT (inchangé)
         createFeaturesSection();
         createCallToAction();
     }
 
-    /* ========================================================= */
     /* ===================== HERO SECTION ====================== */
-    /* ========================================================= */
 
     private void createHeroSection() {
         VerticalLayout hero = new VerticalLayout();
@@ -93,9 +87,7 @@ public class HomeView extends VerticalLayout {
         add(hero);
     }
 
-    /* ========================================================= */
-    /* ============ NOUVELLE SECTION : EVENTS GRID ============== */
-    /* ========================================================= */
+    /* ================= EVENTS GRID ================= */
 
     private void createEventsGridSection() {
         H2 title = new H2("🎟️ Événements à venir");
@@ -125,6 +117,8 @@ public class HomeView extends VerticalLayout {
         add(title, grid);
     }
 
+    /* ================= EVENT CARD ================= */
+
     private VerticalLayout createEventCard(Event event) {
         VerticalLayout card = new VerticalLayout();
         card.setPadding(true);
@@ -135,6 +129,18 @@ public class HomeView extends VerticalLayout {
                 .set("border", "1px solid #e5e7eb")
                 .set("border-radius", "12px")
                 .set("box-shadow", "0 2px 6px rgba(0,0,0,0.08)");
+
+        /* ========= 🔥 SEULE MODIFICATION ICI ========= */
+        Image eventImage = new Image(
+                event.getImageUrl(),   // ⬅️ URL déjà complète depuis la DB
+                event.getTitre()
+        );
+        eventImage.setWidthFull();
+        eventImage.setHeight("180px");
+        eventImage.getStyle()
+                .set("object-fit", "cover")
+                .set("border-radius", "8px");
+        /* ============================================ */
 
         H3 title = new H3(event.getTitre());
         Span date = new Span(
@@ -149,13 +155,11 @@ public class HomeView extends VerticalLayout {
                 NavigationManager.goToEventDetail(event.getId())
         );
 
-        card.add(title, date, city, price, details);
+        card.add(eventImage, title, date, city, price, details);
         return card;
     }
 
-    /* ========================================================= */
-    /* ================= FEATURES (INCHANGÉ) =================== */
-    /* ========================================================= */
+    /* ================= FEATURES (INCHANGÉ) ================= */
 
     private void createFeaturesSection() {
         H2 featuresTitle = new H2("Pourquoi choisir Event Reservation ?");
@@ -195,9 +199,7 @@ public class HomeView extends VerticalLayout {
         return card;
     }
 
-    /* ========================================================= */
-    /* ================= CTA (INCHANGÉ) ======================== */
-    /* ========================================================= */
+    /* ================= CTA (INCHANGÉ) ================= */
 
     private void createCallToAction() {
         VerticalLayout cta = new VerticalLayout();
