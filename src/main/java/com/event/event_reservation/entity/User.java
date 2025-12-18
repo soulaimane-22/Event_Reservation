@@ -4,6 +4,7 @@ import com.event.event_reservation.entity.enums.UserRole;
 import com.event.event_reservation.entity.enums.ThemePreference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,10 +40,10 @@ public class User {
     private UserRole role;
 
     @Column(nullable = false)
-    private LocalDateTime dateInscription = LocalDateTime.now();
+    private LocalDateTime dateInscription;
 
     @Column(nullable = false)
-    private Boolean actif = true;
+    private Boolean actif;
 
     @Column(length = 20)
     private String telephone;
@@ -53,7 +54,8 @@ public class User {
     @Column
     private LocalDateTime dateModification;
 
-    // Relations
+    /* ===================== RELATIONS ===================== */
+
     @OneToMany(mappedBy = "organisateur", cascade = CascadeType.REMOVE)
     private List<Event> eventsOrganises;
 
@@ -69,8 +71,17 @@ public class User {
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE)
     private List<RechercheRecente> recherchesRecentes;
 
+    /* ===================== LIFECYCLE ===================== */
+
+    @PrePersist
+    protected void onCreate() {
+        this.dateInscription = LocalDateTime.now();
+        this.dateModification = LocalDateTime.now();
+        this.actif = true;
+    }
+
     @PreUpdate
     protected void onUpdate() {
-        dateModification = LocalDateTime.now();
+        this.dateModification = LocalDateTime.now();
     }
 }
