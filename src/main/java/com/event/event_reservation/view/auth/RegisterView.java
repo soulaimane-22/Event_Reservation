@@ -7,6 +7,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -15,8 +16,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.event.event_reservation.config.NavigationManager;
-import com.event.event_reservation.entity.User;
 import com.event.event_reservation.entity.enums.UserRole;
 import com.event.event_reservation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ public class RegisterView extends VerticalLayout {
     public RegisterView(UserService userService) {
         this.userService = userService;
 
-        // --- FIX BACKGROUND UNIQUE ---
+        // Configuration du conteneur racine
         setSizeFull();
         setPadding(false);
         setSpacing(false);
@@ -47,172 +46,184 @@ public class RegisterView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // On applique le background sur le conteneur racine avec min-height pour éviter les coupures
-        getStyle().set("background", "linear-gradient(135deg, " + BRAND_BLUE + " 0%, #435591 100%)");
-        getStyle().set("background-attachment", "fixed");
+        // BACKGROUND : UNE SEULE COULEUR UNIE (JAVA ONLY)
+        getStyle().set("background-color", BRAND_BLUE);
         getStyle().set("min-height", "100vh");
-        getStyle().set("height", "auto"); // Permet l'extension si le formulaire est long
+        getStyle().set("height", "auto");
 
         add(createRegisterCard());
     }
 
     private VerticalLayout createRegisterCard() {
         VerticalLayout card = new VerticalLayout();
-        card.setWidth("600px");
-        card.setPadding(true);
-        card.setSpacing(true);
-        card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "20px")
-                .set("box-shadow", "0 20px 40px rgba(0, 0, 0, 0.3)")
-                .set("padding", "40px")
-                .set("margin", "40px 0"); // Marge pour ne pas coller aux bords sur mobile
+        card.setWidth("950px");
+        card.setSpacing(false);
+        card.setPadding(false);
+        card.setAlignItems(Alignment.CENTER);
 
-        // 1. LOGO XXL (CLIQUABLE)
-        Image logo = new Image("images/events/logos/OCCASIO_EVENT.svg", "Occasio Event");
-        logo.setWidth("220px");
-        logo.getStyle().set("margin", "0 auto 10px auto");
+        // Style de la carte
+        var s = card.getStyle();
+        s.set("background-color", "white");
+        s.set("border-radius", "25px");
+        s.set("box-shadow", "0 25px 50px rgba(0, 0, 0, 0.3)");
+        s.set("padding", "20px 50px 30px 50px"); // Padding réduit en haut pour remonter le contenu
+        s.set("margin", "20px 0");
+
+        // 1. Logo (Cliquable, marge minimale)
+        Image logo = new Image("images/events/logos/OCCASIO_EVENT.svg", "Occasio");
+        logo.setWidth("200px");
         logo.getStyle().set("cursor", "pointer");
+        logo.getStyle().set("margin-bottom", "0px");
         logo.addClickListener(e -> UI.getCurrent().navigate(""));
 
-        H2 subtitle = new H2("Créer un compte");
-        subtitle.getStyle().set("color", BRAND_BLUE).set("margin", "0 auto 30px auto").set("font-weight", "800");
+        // 2. Titre (Marge réduite)
+        H2 subtitle = new H2("Création de votre compte");
+        subtitle.getStyle().set("color", BRAND_BLUE);
+        subtitle.getStyle().set("margin", "0 0 20px 0");
+        subtitle.getStyle().set("font-weight", "800");
 
-        // --- SECTION 1 : INFORMATIONS PERSONNELLES ---
-        personalSection(card);
+        // 3. Conteneur des deux colonnes (Alignement START pour remonter les champs)
+        HorizontalLayout columnsContainer = new HorizontalLayout();
+        columnsContainer.setWidthFull();
+        columnsContainer.setSpacing(false);
+        columnsContainer.setAlignItems(Alignment.START);
+        columnsContainer.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-        card.add(new Hr());
+        // --- COLONNE GAUCHE ---
+        VerticalLayout leftCol = new VerticalLayout();
+        leftCol.setPadding(false);
+        leftCol.setSpacing(true);
+        leftCol.setWidth("45%");
+        buildLeftColumn(leftCol);
 
-        // --- SECTION 2 : SÉCURITÉ & COMPTE ---
-        accountSection(card);
+        // --- SÉPARATEUR VERTICAL ---
+        Span separator = new Span();
+        separator.setWidth("1px");
+        separator.setHeight("320px");
+        separator.getStyle().set("background-color", "#E0E0E0");
+        separator.getStyle().set("margin", "10px 20px 0 20px");
 
-        // BOUTON INSCRIPTION
-        Button registerButton = new Button("Créer mon compte");
-        registerButton.setWidthFull();
-        registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        registerButton.getStyle()
-                .set("background-color", BRAND_BLUE)
-                .set("height", "55px")
-                .set("margin-top", "20px")
-                .set("font-weight", "700");
-        registerButton.addClickListener(e -> handleRegister());
+        // --- COLONNE DROITE ---
+        VerticalLayout rightCol = new VerticalLayout();
+        rightCol.setPadding(false);
+        rightCol.setSpacing(true);
+        rightCol.setWidth("45%");
+        buildRightColumn(rightCol);
 
-        // LIEN CONNEXION
+        columnsContainer.add(leftCol, separator, rightCol);
+
+        // 4. Bouton de validation (Remonté)
+        Button regBtn = new Button("Finaliser mon inscription", e -> handleRegister());
+        regBtn.setWidth("400px");
+        regBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        regBtn.getStyle().set("background-color", BRAND_BLUE);
+        regBtn.getStyle().set("height", "55px");
+        regBtn.getStyle().set("margin-top", "25px");
+        regBtn.getStyle().set("font-weight", "700");
+
+        // 5. Footer (Lien connexion)
         Div footer = new Div(new Span("Déjà inscrit ? "), new Anchor("login", "Se connecter"));
-        footer.getStyle().set("text-align", "center").set("margin-top", "20px");
-        footer.getChildren().filter(c -> c instanceof Anchor).forEach(c ->
-                ((Anchor)c).getStyle().set("color", BRAND_BLUE).set("font-weight", "700").set("text-decoration", "none")
-        );
+        footer.getStyle().set("margin-top", "15px");
+        footer.getStyle().set("font-size", "0.95em");
+        // Style du lien via Java
+        footer.getChildren().filter(c -> c instanceof Anchor).forEach(c -> {
+            var anchorStyle = ((Anchor)c).getStyle();
+            anchorStyle.set("color", BRAND_BLUE);
+            anchorStyle.set("font-weight", "700");
+            anchorStyle.set("text-decoration", "none");
+        });
 
-        card.add(registerButton, footer);
-        card.setAlignItems(Alignment.CENTER);
+        card.add(logo, subtitle, columnsContainer, regBtn, footer);
         return card;
     }
 
-    private void personalSection(VerticalLayout card) {
-        card.add(createSectionHeader("Informations Personnelles"));
+    private void buildLeftColumn(VerticalLayout col) {
+        col.add(createHeader("Informations Personnelles"));
 
         nomField = new TextField("Nom");
-        prenomField = new TextField("Prénom");
-        HorizontalLayout nameLayout = new HorizontalLayout(nomField, prenomField);
-        nameLayout.setWidthFull();
         nomField.setWidthFull();
+        nomField.setPlaceholder("Ex: Bennani");
+
+        prenomField = new TextField("Prénom");
         prenomField.setWidthFull();
+        prenomField.setPlaceholder("Ex: Youssef");
 
-        telephoneField = new TextField("Téléphone (optionnel)");
+        telephoneField = new TextField("Téléphone");
         telephoneField.setWidthFull();
+        telephoneField.setPlaceholder("06... ou 07...");
 
-        card.add(nameLayout, telephoneField);
+        col.add(nomField, prenomField, telephoneField);
     }
 
-    private void accountSection(VerticalLayout card) {
-        card.add(createSectionHeader("Sécurité & Compte"));
+    private void buildRightColumn(VerticalLayout col) {
+        col.add(createHeader("Sécurité & Compte"));
 
         emailField = new EmailField("Adresse Email");
         emailField.setWidthFull();
+        emailField.setPlaceholder("votre@email.com");
 
-        // --- COMBOBOX AVEC ICÔNES SVG ---
         roleComboBox = new ComboBox<>("Type de profil");
         roleComboBox.setWidthFull();
         roleComboBox.setItems(UserRole.CLIENT, UserRole.ORGANIZER);
         roleComboBox.setValue(UserRole.CLIENT);
-
-        // Rendu des icônes dans la liste
         roleComboBox.setRenderer(new ComponentRenderer<>(role -> {
             HorizontalLayout row = new HorizontalLayout();
+            Image icon = new Image(ICON_PATH + (role == UserRole.CLIENT ? "client.svg" : "organizer.svg"), "");
+            icon.setWidth("18px");
+            row.add(icon, new Span(role == UserRole.CLIENT ? "Client (Acheteur)" : "Organisateur (Vendeur)"));
             row.setAlignItems(Alignment.CENTER);
-
-            // On utilise client.svg ou organizer.svg
-            String iconFile = (role == UserRole.CLIENT) ? "client.svg" : "organizer.svg";
-            Image icon = new Image(ICON_PATH + iconFile, "");
-            icon.setWidth("20px");
-
-            Span text = new Span(role == UserRole.CLIENT ? "Client (Acheteur)" : "Organisateur (Vendeur)");
-            row.add(icon, text);
             return row;
         }));
-
-        // Label pour l'élément sélectionné
-        roleComboBox.setItemLabelGenerator(role -> role == UserRole.CLIENT ? "Client (Acheteur)" : "Organisateur (Vendeur)");
+        roleComboBox.setItemLabelGenerator(r -> r == UserRole.CLIENT ? "Client" : "Organisateur");
 
         passwordField = new PasswordField("Mot de passe");
         passwordField.setWidthFull();
+
         passwordStrength = new Span();
-        passwordStrength.getStyle().set("font-size", "0.8em");
-        passwordField.addValueChangeListener(e -> updatePasswordStrength(e.getValue()));
+        passwordStrength.getStyle().set("font-size", "0.8em").set("margin-top", "-5px");
+        passwordField.addValueChangeListener(e -> updateStrength(e.getValue()));
 
         confirmPasswordField = new PasswordField("Confirmer le mot de passe");
         confirmPasswordField.setWidthFull();
 
-        card.add(emailField, roleComboBox, passwordField, passwordStrength, confirmPasswordField);
+        col.add(emailField, roleComboBox, passwordField, passwordStrength, confirmPasswordField);
     }
 
-    private Span createSectionHeader(String text) {
-        Span header = new Span(text);
-        header.getStyle()
-                .set("color", BRAND_BLUE)
-                .set("font-weight", "700")
-                .set("font-size", "0.85em")
-                .set("text-transform", "uppercase")
-                .set("display", "block")
-                .set("margin-top", "10px");
-        return header;
+    private Span createHeader(String text) {
+        Span h = new Span(text);
+        var s = h.getStyle();
+        s.set("color", BRAND_BLUE);
+        s.set("font-weight", "800");
+        s.set("font-size", "0.82em");
+        s.set("text-transform", "uppercase");
+        s.set("letter-spacing", "1px");
+        s.set("margin-bottom", "5px");
+        return h;
     }
 
-    private void updatePasswordStrength(String password) {
-        if (password == null || password.isEmpty()) { passwordStrength.setText(""); return; }
-        int strength = password.length();
-        if (strength < 8) {
-            passwordStrength.setText("Sécurité : Faible");
+    private void updateStrength(String p) {
+        if (p == null || p.length() < 8) {
+            passwordStrength.setText("Force : Faible");
             passwordStrength.getStyle().set("color", "#ef4444");
         } else {
-            passwordStrength.setText("Sécurité : Optimale");
+            passwordStrength.setText("Force : Optimale");
             passwordStrength.getStyle().set("color", "#10b981");
         }
     }
 
     private void handleRegister() {
         if (nomField.isEmpty() || prenomField.isEmpty() || emailField.isEmpty() || passwordField.isEmpty()) {
-            showNotification("Tous les champs sont obligatoires", NotificationVariant.LUMO_ERROR);
-            return;
-        }
-        if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
-            showNotification("Les mots de passe ne correspondent pas", NotificationVariant.LUMO_ERROR);
+            Notification n = Notification.show("Veuillez remplir les champs obligatoires", 3000, Notification.Position.TOP_CENTER);
+            n.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
         try {
-            userService.registerUser(nomField.getValue(), prenomField.getValue(),
-                    emailField.getValue(), passwordField.getValue(),
-                    roleComboBox.getValue());
-            showNotification("Bienvenue ! Votre compte a été créé.", NotificationVariant.LUMO_SUCCESS);
+            userService.registerUser(nomField.getValue(), prenomField.getValue(), emailField.getValue(), passwordField.getValue(), roleComboBox.getValue());
+            Notification.show("Inscription réussie !", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             UI.getCurrent().navigate("login");
         } catch (Exception e) {
-            showNotification(e.getMessage(), NotificationVariant.LUMO_ERROR);
+            Notification.show(e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
-    }
-
-    private void showNotification(String text, NotificationVariant variant) {
-        Notification n = Notification.show(text, 3000, Notification.Position.TOP_CENTER);
-        n.addThemeVariants(variant);
     }
 }

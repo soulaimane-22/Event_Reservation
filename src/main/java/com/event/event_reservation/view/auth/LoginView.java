@@ -15,7 +15,6 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
 import com.event.event_reservation.entity.User;
 import com.event.event_reservation.service.UserService;
@@ -38,18 +37,16 @@ public class LoginView extends VerticalLayout {
     public LoginView(UserService userService) {
         this.userService = userService;
 
-        // --- FIX BACKGROUND UNIQUE (PLEIN ÉCRAN) ---
+        // Configuration du conteneur racine
         setSizeFull();
         setPadding(false);
-        setSpacing(false);
         setMargin(false);
+        setSpacing(false);
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        getStyle().set("background", "linear-gradient(135deg, " + BRAND_BLUE + " 0%, #435591 100%)");
-        getStyle().set("background-attachment", "fixed");
-        getStyle().set("min-height", "100vh");
-        getStyle().set("height", "auto");
+        // BACKGROUND UNI VIA JAVA
+        getStyle().set("background-color", BRAND_BLUE);
 
         add(createLoginCard());
     }
@@ -57,118 +54,71 @@ public class LoginView extends VerticalLayout {
     private VerticalLayout createLoginCard() {
         VerticalLayout card = new VerticalLayout();
         card.setWidth("450px");
-        card.setPadding(true);
+        card.setSpacing(false);
+        card.setPadding(false);
+        card.setAlignItems(Alignment.CENTER);
 
-        // --- FIX ESPACEMENT ---
-        card.setSpacing(false); // Désactive l'espace automatique entre TOUS les éléments
+        // Style de la carte via Java Style API
+        var s = card.getStyle();
+        s.set("background-color", "white");
+        s.set("border-radius", "20px");
+        s.set("box-shadow", "0 20px 40px rgba(0, 0, 0, 0.4)");
+        s.set("padding", "20px 45px 40px 45px"); // Padding réduit en haut
 
-        card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "20px")
-                .set("box-shadow", "0 20px 40px rgba(0, 0, 0, 0.3)")
-                .set("padding", "50px")
-                .set("margin", "20px 0");
-
-        // 1. LOGO (CLIQUABLE ET MARGE RÉDUITE)
-        Image logo = new Image("images/events/logos/OCCASIO_EVENT.svg", "Occasio Event");
-        logo.setWidth("240px");
-        logo.getStyle()
-                .set("margin", "0 auto 10px auto") // Marge réduite de 30px à 10px
-                .set("cursor", "pointer");
+        // 1. Logo cliquable (Très haut)
+        Image logo = new Image("images/events/logos/OCCASIO_EVENT.svg", "Occasio");
+        logo.setWidth("220px");
+        logo.getStyle().set("cursor", "pointer");
+        logo.getStyle().set("margin-bottom", "10px");
         logo.addClickListener(e -> UI.getCurrent().navigate(""));
 
-        // 2. TITRE (RAVI DE VOUS REVOIR)
+        // 2. Textes
         Span welcomeText = new Span("Ravi de vous revoir");
-        welcomeText.getStyle()
-                .set("color", BRAND_BLUE)
-                .set("font-size", "1.8em")
-                .set("font-weight", "800")
-                .set("margin", "0 0 5px 0"); // Marge contrôlée
+        welcomeText.getStyle().set("color", BRAND_BLUE).set("font-size", "1.6em").set("font-weight", "800");
 
-        // 3. SOUS-TITRE
-        Span instructions = new Span("Veuillez saisir vos identifiants pour accéder à votre espace.");
-        instructions.getStyle()
-                .set("color", "#666")
-                .set("font-size", "0.95em")
-                .set("text-align", "center")
-                .set("margin", "0 0 25px 0"); // Espace avant les champs de texte
+        Span instructions = new Span("Identifiez-vous pour continuer");
+        instructions.getStyle().set("color", "#666").set("margin-bottom", "20px").set("font-size", "0.9em");
 
-        // 4. FORMULAIRE
+        // 3. Formulaire
         emailField = new EmailField("Adresse Email");
         emailField.setWidthFull();
-        emailField.getStyle().set("margin-bottom", "15px");
+        emailField.getStyle().set("margin-bottom", "10px");
 
         passwordField = new PasswordField("Mot de passe");
         passwordField.setWidthFull();
         passwordField.getStyle().set("margin-bottom", "20px");
+        passwordField.addKeyPressListener(com.vaadin.flow.component.Key.ENTER, e -> handleLogin());
 
-        passwordField.addKeyPressListener(e -> {
-            if (e.getKey().getKeys().contains("Enter")) handleLogin();
-        });
-
-        // 5. BOUTON
-        Button loginButton = new Button("Se connecter");
+        // 4. Bouton
+        Button loginButton = new Button("Se connecter", e -> handleLogin());
         loginButton.setWidthFull();
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        loginButton.getStyle()
-                .set("background-color", BRAND_BLUE)
-                .set("height", "55px")
-                .set("font-weight", "600")
-                .set("font-size", "1.1em");
-        loginButton.addClickListener(e -> handleLogin());
+        loginButton.getStyle().set("background-color", BRAND_BLUE).set("height", "50px").set("font-weight", "700");
 
-        // 6. FOOTER
-        Div footer = new Div();
-        footer.getStyle()
-                .set("text-align", "center")
-                .set("margin-top", "25px")
-                .set("width", "100%");
+        // 5. Lien inscription
+        Div footer = new Div(new Span("Nouveau ici ? "), new Anchor("register", "Créer un compte"));
+        footer.getStyle().set("margin-top", "20px").set("font-size", "0.9em");
+        footer.getChildren().filter(c -> c instanceof Anchor).forEach(c -> {
+            ((Anchor)c).getStyle().set("color", BRAND_BLUE).set("font-weight", "700").set("text-decoration", "none");
+        });
 
-        Span noAccount = new Span("Pas encore de compte ? ");
-        noAccount.getStyle().set("color", "#666").set("font-size", "0.9em");
-
-        Anchor registerLink = new Anchor("register", "S'inscrire gratuitement");
-        registerLink.getStyle()
-                .set("color", BRAND_BLUE)
-                .set("font-weight", "700")
-                .set("text-decoration", "none")
-                .set("font-size", "0.9em");
-
-        footer.add(noAccount, registerLink);
-
-        // Assemblage
         card.add(logo, welcomeText, instructions, emailField, passwordField, loginButton, footer);
-        card.setAlignItems(Alignment.CENTER);
-
         return card;
     }
 
     private void handleLogin() {
-        String email = emailField.getValue().trim();
-        String password = passwordField.getValue();
-
-        if (email.isEmpty() || password.isEmpty()) {
-            showNotification("Veuillez remplir tous les champs", NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
+        if (emailField.isEmpty() || passwordField.isEmpty()) return;
         try {
-            Optional<User> userOptional = userService.authenticate(email, password);
-            if (userOptional.isPresent()) {
-                VaadinSession.setCurrentUser(userOptional.get());
-                showNotification("Connexion réussie", NotificationVariant.LUMO_SUCCESS);
+            Optional<User> user = userService.authenticate(emailField.getValue(), passwordField.getValue());
+            if (user.isPresent()) {
+                VaadinSession.setCurrentUser(user.get());
                 UI.getCurrent().navigate("");
             } else {
-                showNotification("Identifiants incorrects", NotificationVariant.LUMO_ERROR);
-                passwordField.clear();
+                Notification.show("Identifiants incorrects", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         } catch (Exception e) {
-            showNotification("Erreur de connexion", NotificationVariant.LUMO_ERROR);
+            Notification.show("Erreur de connexion").addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
-    }
-
-    private void showNotification(String text, NotificationVariant variant) {
-        Notification n = Notification.show(text, 3000, Notification.Position.TOP_CENTER);
-        n.addThemeVariants(variant);
     }
 }
