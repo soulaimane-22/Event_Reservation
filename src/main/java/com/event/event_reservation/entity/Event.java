@@ -96,6 +96,14 @@ public class Event {
     @OneToMany(mappedBy = "evenement", cascade = CascadeType.REMOVE)
     private List<Notification> notifications;
 
+    /**
+     * AJOUT : Méthode utilitaire pour la compatibilité avec l'UI
+     * Retourne simplement la capacité restante.
+     */
+    public Integer getNbPlacesDisponibles() {
+        return this.capaciteRestante != null ? this.capaciteRestante : 0;
+    }
+
     @PreUpdate
     protected void onUpdate() {
         dateModification = LocalDateTime.now();

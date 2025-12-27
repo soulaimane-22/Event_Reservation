@@ -1,9 +1,9 @@
 package com.event.event_reservation.view.publics;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -17,17 +17,16 @@ import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Page de détails d'un événement
- * URL: /event/{id}
- */
 @Route(value = "event", layout = VaadinAppLayout.class)
 @PageTitle("Détails Événement - Event Reservation")
 public class EventDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final EventRepository eventRepository;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
 
     private Event event;
     private Long eventId;
@@ -36,209 +35,162 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
     public EventDetailView(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
 
-        setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-        setMaxWidth("1000px");
-        getStyle().set("margin", "0 auto");
+        // Configuration Plein Écran pour l'image
+        setPadding(false);
+        setSpacing(false);
+        setWidthFull();
     }
 
     @Override
     public void setParameter(BeforeEvent beforeEvent, Long parameter) {
         if (parameter == null) {
-            showError("Événement non trouvé");
             NavigationManager.goToEventList();
             return;
         }
-
         this.eventId = parameter;
         loadEvent();
     }
 
-    /**
-     * Charger l'événement
-     */
     private void loadEvent() {
         Optional<Event> eventOptional = eventRepository.findById(eventId);
-
         if (eventOptional.isEmpty()) {
-            showError("Événement non trouvé");
             NavigationManager.goToEventList();
             return;
         }
-
         this.event = eventOptional.get();
         createContent();
     }
 
-    /**
-     * Créer le contenu de la page
-     */
     private void createContent() {
-        // Bouton retour
-        Button backBtn = new Button("← Retour aux événements", e -> NavigationManager.goToEventList());
-        backBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        add(backBtn);
+        removeAll();
 
-        // Card principale
-        VerticalLayout card = new VerticalLayout();
-        card.setPadding(true);
-        card.setSpacing(true);
-        card.getStyle()
+        // 1. IMAGE EDGE-TO-EDGE
+        Div heroImage = new Div();
+        heroImage.setWidthFull();
+        heroImage.setHeight("500px");
+        heroImage.getStyle()
+                .set("background-image", "url('" + event.getImageUrl() + "')")
+                .set("background-size", "cover")
+                .set("background-position", "center")
+                .set("box-shadow", "inset 0 -100px 100px -50px rgba(0,0,0,0.2)");
+
+        // 2. CONTENEUR DE CONTENU (CENTRÉ)
+        VerticalLayout mainContent = new VerticalLayout();
+        mainContent.setMaxWidth("1100px");
+        mainContent.getStyle().set("margin", "0 auto");
+        mainContent.setPadding(true);
+        mainContent.getStyle().set("margin-top", "-60px"); // Effet de chevauchement sur l'image
+
+        // Card Blanche pour les infos
+        VerticalLayout infoCard = new VerticalLayout();
+        infoCard.getStyle()
                 .set("background", "white")
-                .set("border-radius", "10px")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)");
+                .set("border-radius", "20px")
+                .set("padding", "40px")
+                .set("box-shadow", "0 15px 35px rgba(0,0,0,0.1)");
 
-        // En-tête avec badge statut
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(Alignment.CENTER);
-
+        // Titre et Catégorie
         H1 title = new H1(event.getTitre());
-        title.getStyle().set("margin", "0");
+        title.getStyle().set("color", BRAND_BLUE).set("margin", "0");
 
-        Span statusBadge = createStatusBadge();
-        statusBadge.getStyle().set("margin-left", "auto");
-
-        header.add(title, statusBadge);
-
-        /* ================================================= */
-        /* ========== 🔥 AJOUT IMAGE EVENT (ICI) =========== */
-        /* ================================================= */
-        Image eventImage = new Image(
-                event.getImageUrl(),   // URL complète depuis la DB
-                event.getTitre()
-        );
-        eventImage.setWidthFull();
-        eventImage.setHeight("360px");
-        eventImage.getStyle()
-                .set("object-fit", "cover")
-                .set("border-radius", "8px")
-                .set("margin-top", "1em");
-        /* ================================================= */
-
-        // Badge catégorie
         Span categoryBadge = new Span(event.getCategorie().toString());
-        categoryBadge.getElement().getThemeList().add("badge");
         categoryBadge.getStyle()
-                .set("background", getCategoryColor(event.getCategorie()))
-                .set("color", "white")
-                .set("padding", "6px 12px")
-                .set("border-radius", "6px")
-                .set("display", "inline-block");
+                .set("background", "#f0f2f5")
+                .set("color", BRAND_BLUE)
+                .set("padding", "5px 15px")
+                .set("border-radius", "5px")
+                .set("font-weight", "600");
 
-        // Informations principales
-        VerticalLayout infoSection = new VerticalLayout();
-        infoSection.setPadding(false);
-        infoSection.setSpacing(true);
+        HorizontalLayout header = new HorizontalLayout(title, categoryBadge);
+        header.setAlignItems(Alignment.CENTER);
+        header.setWidthFull();
+        header.setFlexGrow(1, title);
 
-        infoSection.add(
-                createInfoRow(VaadinIcon.CALENDAR, "Date de début",
-                        event.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"))),
-                createInfoRow(VaadinIcon.CALENDAR_CLOCK, "Date de fin",
-                        event.getDateFin().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"))),
-                createInfoRow(VaadinIcon.MAP_MARKER, "Lieu", event.getLieu()),
-                createInfoRow(VaadinIcon.LOCATION_ARROW, "Ville", event.getVille()),
-                createInfoRow(VaadinIcon.DOLLAR, "Prix", event.getPrixUnitaire() + " DH"),
-                createInfoRow(VaadinIcon.USERS, "Places disponibles",
-                        event.getCapaciteRestante() + " / " + event.getCapaciteMax())
+        infoCard.add(header, new Hr());
+
+        // Grille d'informations avec SVG
+        Div infoGrid = new Div();
+        infoGrid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fit, minmax(300px, 1fr))")
+                .set("gap", "20px")
+                .set("width", "100%");
+
+        infoGrid.add(
+                createSvgInfoRow("date_time.svg", "Début", event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH))),
+                createSvgInfoRow("date_fin.svg", "Fin", event.getDateFin().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH))),
+                createSvgInfoRow("ville.svg", "Ville", event.getVille()),
+                createSvgInfoRow("map.svg", "Lieu précis", event.getLieu()),
+                createSvgInfoRow("argent.svg", "Tarif", event.getPrixUnitaire() + " MAD"),
+                createSvgInfoRow("people.svg", "Disponibilité", event.getCapaciteRestante() + " places sur " + event.getCapaciteMax())
         );
 
-        // Description
-        H2 descTitle = new H2("📝 Description");
-        descTitle.getStyle().set("margin-top", "2em");
+        infoCard.add(infoGrid);
+
+        // Section Description avec icône
+        HorizontalLayout descHeader = new HorizontalLayout(
+                new Image(ICON_PATH + "description.svg", ""),
+                new H2("Description")
+        );
+        descHeader.setAlignItems(Alignment.CENTER);
+        descHeader.getStyle().set("margin-top", "30px");
 
         Paragraph description = new Paragraph(event.getDescription());
-        description.getStyle()
-                .set("color", "#666")
-                .set("line-height", "1.6")
-                .set("white-space", "pre-wrap");
+        description.getStyle().set("color", "#444").set("line-height", "1.8").set("font-size", "1.1em");
 
-        // Organisateur
-        H3 orgTitle = new H3("👤 Organisé par");
-        Paragraph organizer = new Paragraph(
-                event.getOrganisateur().getPrenom() + " " + event.getOrganisateur().getNom()
+        // Section Organisateur
+        HorizontalLayout orgRow = new HorizontalLayout(
+                new Image(ICON_PATH + "organizer.svg", ""),
+                new Span("Organisé par : "),
+                new Span(event.getOrganisateur().getPrenom() + " " + event.getOrganisateur().getNom())
         );
-        organizer.getStyle().set("color", "#666");
+        orgRow.getStyle().set("font-weight", "600").set("color", BRAND_BLUE).set("margin-top", "20px");
+        orgRow.setAlignItems(Alignment.CENTER);
 
-        // Bouton de réservation
-        HorizontalLayout actionSection = new HorizontalLayout();
-        actionSection.setWidthFull();
-        actionSection.setJustifyContentMode(JustifyContentMode.CENTER);
-        actionSection.setPadding(true);
+        // Bouton de Réservation
+        Button reserveBtn = new Button("Réserver maintenant");
+        reserveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        reserveBtn.setWidthFull();
+        reserveBtn.getStyle().set("background-color", BRAND_BLUE).set("height", "60px").set("font-size", "1.3em");
+        reserveBtn.addClickListener(e -> handleReservation());
 
-        if (event.getCapaciteRestante() > 0) {
-            Button reserveBtn = new Button("Réserver des places", VaadinIcon.TICKET.create());
-            reserveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-            reserveBtn.addClickListener(e -> handleReservation());
-            actionSection.add(reserveBtn);
-        } else {
-            Span soldOut = new Span("❌ Complet");
-            soldOut.getStyle()
-                    .set("color", "var(--lumo-error-color)")
-                    .set("font-size", "1.2em")
-                    .set("font-weight", "bold");
-            actionSection.add(soldOut);
+        if (event.getCapaciteRestante() <= 0) {
+            reserveBtn.setText("Événement Complet");
+            reserveBtn.setEnabled(false);
+            reserveBtn.getStyle().set("background-color", "#ccc");
         }
 
-        // Ajouter tous les composants à la card
-        card.add(
-                header,
-                eventImage,      // 👈 image bien intégrée
-                categoryBadge,
-                new Hr(),
-                infoSection,
-                descTitle,
-                description,
-                orgTitle,
-                organizer,
-                new Hr(),
-                actionSection
-        );
+        infoCard.add(descHeader, description, orgRow, new Hr(), reserveBtn);
 
-        add(card);
+        mainContent.add(infoCard);
+        add(heroImage, mainContent);
     }
 
-    /* =================== AUTRES MÉTHODES INCHANGÉES =================== */
-
-    private Span createStatusBadge() {
-        Span badge = new Span(event.getStatut().toString());
-        badge.getElement().getThemeList().add("badge");
-
-        String color = switch (event.getStatut()) {
-            case PUBLIE -> "#10b981";
-            case BROUILLON -> "#6b7280";
-            case ANNULE -> "#ef4444";
-            case TERMINE -> "#3b82f6";
-        };
-
-        badge.getStyle()
-                .set("background", color)
-                .set("color", "white")
-                .set("padding", "6px 12px")
-                .set("border-radius", "6px");
-
-        return badge;
-    }
-
-    private HorizontalLayout createInfoRow(VaadinIcon icon, String label, String value) {
+    /**
+     * Crée une ligne d'information propre avec une icône SVG
+     */
+    private HorizontalLayout createSvgInfoRow(String svgName, String label, String value) {
         HorizontalLayout row = new HorizontalLayout();
-        row.setSpacing(true);
         row.setAlignItems(Alignment.CENTER);
+        row.setSpacing(true);
+        row.getStyle().set("padding", "10px 0");
 
-        icon.create().setColor("#667eea");
-        icon.create().setSize("20px");
+        Image icon = new Image(ICON_PATH + svgName, "");
+        icon.setWidth("28px");
+        icon.setHeight("28px");
 
-        Span labelSpan = new Span(label + ":");
-        labelSpan.getStyle()
-                .set("font-weight", "bold")
-                .set("min-width", "150px")
-                .set("color", "#333");
+        VerticalLayout textLayout = new VerticalLayout();
+        textLayout.setPadding(false);
+        textLayout.setSpacing(false);
+
+        Span labelSpan = new Span(label);
+        labelSpan.getStyle().set("font-size", "0.85em").set("color", "#888").set("text-transform", "uppercase");
 
         Span valueSpan = new Span(value);
-        valueSpan.getStyle().set("color", "#666");
+        valueSpan.getStyle().set("font-weight", "600").set("color", BRAND_BLUE);
 
-        row.add(icon.create(), labelSpan, valueSpan);
+        textLayout.add(labelSpan, valueSpan);
+        row.add(icon, textLayout);
         return row;
     }
 
@@ -246,36 +198,9 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         if (VaadinSession.isUserLoggedIn()) {
             NavigationManager.goToReservationForm(eventId);
         } else {
-            Notification notification = Notification.show(
-                    "Vous devez être connecté pour réserver",
-                    3000,
-                    Notification.Position.TOP_CENTER
-            );
-            notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
-
-            getUI().ifPresent(ui -> ui.access(() -> {
-                try {
-                    Thread.sleep(2000);
-                    NavigationManager.goToLogin();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }));
+            Notification n = Notification.show("Veuillez vous connecter pour réserver.", 3000, Notification.Position.TOP_CENTER);
+            n.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+            UI.getCurrent().navigate("login");
         }
-    }
-
-    private String getCategoryColor(com.event.event_reservation.entity.enums.EventCategory category) {
-        return switch (category) {
-            case CONCERT -> "#8b5cf6";
-            case THEATRE -> "#ec4899";
-            case CONFERENCE -> "#3b82f6";
-            case SPORT -> "#10b981";
-            case AUTRE -> "#6b7280";
-        };
-    }
-
-    private void showError(String message) {
-        Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
-        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

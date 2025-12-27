@@ -8,105 +8,133 @@ import com.event.event_reservation.view.components.VaadinAppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * Page d'accueil publique
- * URL: /
- */
 @Route(value = "", layout = VaadinAppLayout.class)
 @PageTitle("Accueil - Event Reservation")
 public class HomeView extends VerticalLayout {
 
     private final EventService eventService;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
 
     @Autowired
     public HomeView(EventService eventService) {
         this.eventService = eventService;
 
-        // Configuration du layout
-        setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-        setAlignItems(Alignment.CENTER);
+        // Configuration Plein Écran
+        setPadding(false);
+        setSpacing(false);
+        setMargin(false);
+        setWidthFull();
 
-        // Contenu EXISTANT (inchangé)
+        // 1. HERO SECTION (Texte pur sur Gradient)
         createHeroSection();
-        createEventsGridSection();
-        createFeaturesSection();
+
+        // Conteneur pour la grille
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+        content.setAlignItems(Alignment.CENTER);
+        content.getStyle().set("padding", "60px 5%");
+
+        List<Event> allEvents = eventService.searchEvents(null, null, null, null, null, null)
+                .stream()
+                .filter(e -> e.getStatut() == EventStatus.PUBLIE)
+                .sorted(Comparator.comparing(Event::getDateDebut))
+                .toList();
+
+        // 2. Grille des événements
+        createEventsGridSection(content, allEvents);
+
+        add(content);
         createCallToAction();
     }
 
-    /* ===================== HERO SECTION ====================== */
-
     private void createHeroSection() {
-        VerticalLayout hero = new VerticalLayout();
-        hero.setWidth("100%");
-        hero.setMaxWidth("800px");
-        hero.setPadding(true);
-        hero.setSpacing(true);
-        hero.setAlignItems(Alignment.CENTER);
+        Div hero = new Div();
+        hero.setWidthFull();
+        hero.setHeight("500px");
         hero.getStyle()
-                .set("background", "linear-gradient(135deg, #667eea 0%, #764ba2 100%)")
+                .set("background", "linear-gradient(135deg, " + BRAND_BLUE + " 0%, #435591 100%)")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
                 .set("color", "white")
-                .set("border-radius", "15px")
-                .set("margin-top", "2em");
+                .set("position", "relative")
+                .set("overflow", "hidden");
 
-        H1 title = new H1("🎭 Bienvenue sur Event Reservation");
-        title.getStyle().set("margin", "0").set("color", "white");
+        // Cercle décoratif discret
+        Span decoration = new Span();
+        decoration.getStyle()
+                .set("position", "absolute").set("top", "-100px").set("right", "-100px")
+                .set("width", "400px").set("height", "400px")
+                .set("border-radius", "50%")
+                .set("background", "rgba(255,255,255,0.05)");
+        hero.add(decoration);
 
-        Paragraph subtitle = new Paragraph(
-                "Découvrez et réservez les meilleurs événements culturels près de chez vous"
-        );
-        subtitle.getStyle()
-                .set("font-size", "1.2em")
+        VerticalLayout heroContent = new VerticalLayout();
+        heroContent.setAlignItems(Alignment.CENTER);
+        heroContent.setSpacing(true);
+
+        H1 title = new H1("Réservez vos moments inoubliables");
+        title.getStyle()
+                .set("font-size", "3.5em")
+                .set("margin", "0")
                 .set("text-align", "center")
-                .set("max-width", "600px")
-                .set("color", "rgba(255,255,255,0.9)");
+                .set("font-weight", "800")
+                .set("text-shadow", "2px 2px 15px rgba(0,0,0,0.2)");
 
-        HorizontalLayout buttons = new HorizontalLayout();
+        Paragraph subtitle = new Paragraph("La plateforme de référence pour la billetterie et la gestion d'événements au Maroc.");
+        subtitle.getStyle()
+                .set("font-size", "1.4em")
+                .set("max-width", "700px")
+                .set("text-align", "center")
+                .set("opacity", "0.9");
 
-        Button exploreBtn = new Button("Explorer les événements", VaadinIcon.CALENDAR.create());
-        exploreBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        exploreBtn.getStyle().set("background", "white").set("color", "#667eea");
-        exploreBtn.addClickListener(e -> NavigationManager.goToEventList());
-
-        Button registerBtn = new Button("Créer un compte", VaadinIcon.USER_CARD.create());
-        registerBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_LARGE);
-        registerBtn.addClickListener(e -> NavigationManager.goToRegister());
-
-        buttons.add(exploreBtn, registerBtn);
-        hero.add(title, subtitle, buttons);
+        heroContent.add(title, subtitle);
+        hero.add(heroContent);
         add(hero);
     }
 
-    /* ================= EVENTS GRID ================= */
+    private void createEventsGridSection(VerticalLayout container, List<Event> events) {
+        VerticalLayout titleBlock = new VerticalLayout();
+        titleBlock.setAlignItems(Alignment.CENTER);
+        titleBlock.setSpacing(false);
+        titleBlock.setPadding(false);
+        titleBlock.getStyle().set("margin-bottom", "50px");
 
-    private void createEventsGridSection() {
-        H2 title = new H2("🎟️ Événements à venir");
-        title.getStyle().set("margin-top", "3em");
+        Span sub = new Span("Event Reservation - Votre plateforme de billetterie au Maroc et en Afrique");
+        sub.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "600")
+                .set("font-size", "0.95em")
+                .set("opacity", "0.8")
+                .set("letter-spacing", "0.5px");
+
+        H2 mainHeading = new H2("Les événements incontournables");
+        mainHeading.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-size", "2.5em")
+                .set("margin-top", "10px")
+                .set("font-weight", "700");
+
+        titleBlock.add(sub, mainHeading);
 
         Div grid = new Div();
+        grid.setWidthFull();
         grid.getStyle()
                 .set("display", "grid")
-                .set("grid-template-columns", "repeat(3, 1fr)")
-                .set("gap", "24px")
-                .set("max-width", "1100px")
-                .set("width", "100%");
-
-        List<Event> events = eventService.searchEvents(
-                        null, null, null, null, null, null
-                ).stream()
-                .filter(e -> e.getStatut() == EventStatus.PUBLIE)
-                .limit(6)
-                .toList();
+                .set("grid-template-columns", "repeat(auto-fill, minmax(350px, 1fr))")
+                .set("gap", "40px");
 
         if (events.isEmpty()) {
             grid.add(new Paragraph("Aucun événement disponible pour le moment."));
@@ -114,115 +142,111 @@ public class HomeView extends VerticalLayout {
             events.forEach(event -> grid.add(createEventCard(event)));
         }
 
-        add(title, grid);
+        container.add(titleBlock, grid);
     }
-
-    /* ================= EVENT CARD ================= */
 
     private VerticalLayout createEventCard(Event event) {
         VerticalLayout card = new VerticalLayout();
-        card.setPadding(true);
-        card.setSpacing(true);
-
+        card.setPadding(false);
+        card.setSpacing(false);
         card.getStyle()
                 .set("background", "white")
-                .set("border", "1px solid #e5e7eb")
-                .set("border-radius", "12px")
-                .set("box-shadow", "0 2px 6px rgba(0,0,0,0.08)");
+                .set("border-radius", "20px")
+                .set("overflow", "hidden")
+                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.08)")
+                .set("transition", "transform 0.3s ease");
 
-        /* ========= 🔥 SEULE MODIFICATION ICI ========= */
-        Image eventImage = new Image(
-                event.getImageUrl(),   // ⬅️ URL déjà complète depuis la DB
-                event.getTitre()
-        );
-        eventImage.setWidthFull();
-        eventImage.setHeight("180px");
-        eventImage.getStyle()
-                .set("object-fit", "cover")
-                .set("border-radius", "8px");
-        /* ============================================ */
+        Div imageContainer = new Div();
+        imageContainer.setWidthFull();
+        imageContainer.setHeight("240px");
+        imageContainer.getStyle().set("position", "relative");
+
+        Image img = new Image(event.getImageUrl(), event.getTitre());
+        img.setWidthFull(); img.setHeightFull();
+        img.getStyle().set("object-fit", "cover");
+
+        if (event.getNbPlacesDisponibles() <= 0) {
+            Span soldOut = new Span("COMPLET");
+            soldOut.getStyle()
+                    .set("position", "absolute").set("top", "20px").set("left", "20px")
+                    .set("background", BRAND_BLUE).set("color", "white")
+                    .set("padding", "8px 20px").set("font-weight", "800")
+                    .set("border-radius", "6px").set("font-size", "0.8em");
+            imageContainer.add(img, soldOut);
+        } else {
+            imageContainer.add(img);
+        }
+
+        VerticalLayout body = new VerticalLayout();
+        body.setPadding(true);
+        body.setSpacing(false);
+        body.getStyle().set("padding", "30px");
 
         H3 title = new H3(event.getTitre());
-        Span date = new Span(
-                event.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-        );
-        Span city = new Span("📍 " + event.getVille());
-        Span price = new Span("💰 " + event.getPrixUnitaire() + " DH");
+        title.getStyle().set("color", BRAND_BLUE).set("margin", "0 0 20px 0").set("font-size", "1.4em");
 
-        Button details = new Button("Voir détails", VaadinIcon.EYE.create());
-        details.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        details.addClickListener(e ->
-                NavigationManager.goToEventDetail(event.getId())
-        );
+        body.add(title);
+        body.add(createInfoRow("date_time.svg", event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy", Locale.FRENCH))));
+        body.add(createInfoRow("clock_hour.svg", event.getDateDebut().format(DateTimeFormatter.ofPattern("HH:mm"))));
+        body.add(createInfoRow("map.svg", event.getVille()));
 
-        card.add(eventImage, title, date, city, price, details);
+        Span priceValue = new Span(event.getPrixUnitaire() + " MAD");
+        priceValue.getStyle()
+                .set("color", BRAND_BLUE).set("font-weight", "800")
+                .set("font-size", "1.6em").set("margin-top", "15px");
+
+        HorizontalLayout priceRow = createInfoRow("argent.svg", "");
+        priceRow.add(priceValue);
+        body.add(priceRow);
+
+        Button detailsBtn = new Button("Détails de l'événement");
+        detailsBtn.setWidthFull();
+        detailsBtn.getStyle()
+                .set("margin-top", "25px")
+                .set("background-color", BRAND_BLUE)
+                .set("color", "white")
+                .set("height", "50px");
+        detailsBtn.addClickListener(e -> NavigationManager.goToEventDetail(event.getId()));
+
+        body.add(detailsBtn);
+        card.add(imageContainer, body);
+
+        card.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-15px)'; }; " +
+                "this.onmouseout = () => { this.style.transform = 'translateY(0)'; };");
+
         return card;
     }
 
-    /* ================= FEATURES (INCHANGÉ) ================= */
+    private HorizontalLayout createInfoRow(String iconName, String text) {
+        HorizontalLayout row = new HorizontalLayout();
+        row.setAlignItems(Alignment.CENTER);
+        row.setSpacing(true);
+        row.getStyle().set("margin-bottom", "12px");
 
-    private void createFeaturesSection() {
-        H2 featuresTitle = new H2("Pourquoi choisir Event Reservation ?");
-        featuresTitle.getStyle().set("margin-top", "3em").set("text-align", "center");
+        Image icon = new Image(ICON_PATH + iconName, "");
+        icon.setWidth("22px"); icon.setHeight("22px");
 
-        HorizontalLayout features = new HorizontalLayout();
-        features.setWidthFull();
-        features.setMaxWidth("1000px");
-        features.setSpacing(true);
-        features.getStyle().set("flex-wrap", "wrap");
+        Span infoText = new Span(text);
+        infoText.getStyle().set("color", BRAND_BLUE).set("font-size", "1em").set("font-weight", "500");
 
-        features.add(
-                createFeatureCard(VaadinIcon.CALENDAR, "Événements Variés",
-                        "Concerts, théâtres, conférences, événements sportifs et bien plus"),
-                createFeatureCard(VaadinIcon.TICKET, "Réservation Facile",
-                        "Réservez vos places en quelques clics seulement"),
-                createFeatureCard(VaadinIcon.SHIELD, "Paiement Sécurisé",
-                        "Vos transactions sont 100% sécurisées")
-        );
-
-        add(featuresTitle, features);
+        row.add(icon, infoText);
+        return row;
     }
-
-    private VerticalLayout createFeatureCard(VaadinIcon icon, String title, String description) {
-        VerticalLayout card = new VerticalLayout();
-        card.setWidth("300px");
-        card.setPadding(true);
-        card.setSpacing(true);
-        card.setAlignItems(Alignment.CENTER);
-        card.getStyle()
-                .set("background", "white")
-                .set("border", "1px solid #e5e7eb")
-                .set("border-radius", "10px")
-                .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
-
-        card.add(icon.create(), new H2(title), new Paragraph(description));
-        return card;
-    }
-
-    /* ================= CTA (INCHANGÉ) ================= */
 
     private void createCallToAction() {
         VerticalLayout cta = new VerticalLayout();
-        cta.setWidth("100%");
-        cta.setMaxWidth("700px");
-        cta.setPadding(true);
-        cta.setSpacing(true);
+        cta.setWidthFull();
         cta.setAlignItems(Alignment.CENTER);
-        cta.getStyle()
-                .set("margin-top", "3em")
-                .set("background", "#f3f4f6")
-                .set("border-radius", "10px");
+        cta.getStyle().set("background", "#f4f6f9").set("padding", "80px 0");
 
-        H2 ctaTitle = new H2("Prêt à découvrir les événements ?");
-        Paragraph ctaText = new Paragraph(
-                "Rejoignez des milliers d'utilisateurs qui profitent déjà de nos services"
-        );
+        H2 ctaTitle = new H2("Prêt pour une expérience inoubliable ?");
+        ctaTitle.getStyle().set("color", BRAND_BLUE);
 
-        Button startBtn = new Button("Commencer maintenant", VaadinIcon.ARROW_RIGHT.create());
+        Button startBtn = new Button("Commencer dès maintenant", e -> NavigationManager.goToRegister());
         startBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        startBtn.addClickListener(e -> NavigationManager.goToEventList());
+        startBtn.getStyle().set("background-color", BRAND_BLUE).set("padding", "0 50px");
 
-        cta.add(ctaTitle, ctaText, startBtn);
+        cta.add(ctaTitle, startBtn);
         add(cta);
     }
 }
