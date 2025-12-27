@@ -79,7 +79,7 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         mainContent.setMaxWidth("1100px");
         mainContent.getStyle().set("margin", "0 auto");
         mainContent.setPadding(true);
-        mainContent.getStyle().set("margin-top", "-60px"); // Effet de chevauchement sur l'image
+        mainContent.getStyle().set("margin-top", "-60px");
 
         // Card Blanche pour les infos
         VerticalLayout infoCard = new VerticalLayout();
@@ -108,6 +108,27 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
 
         infoCard.add(header, new Hr());
 
+        // --- PRÉPARATION DU LAYOUT POUR LE LIEU (AVEC ICÔNE MAPS) ---
+        HorizontalLayout locationValueLayout = new HorizontalLayout(new Span(event.getLieu()));
+        locationValueLayout.setAlignItems(Alignment.CENTER);
+
+        if (event.getLatitude() != null && event.getLongitude() != null) {
+            String mapUrl = "https://www.google.com/maps/search/?api=1&query=" + event.getLatitude() + "," + event.getLongitude();
+
+            // Création de l'image SVG Google Maps
+            Image googleMapsIcon = new Image(ICON_PATH + "googlemaps.svg", "Google Maps");
+            googleMapsIcon.setWidth("30px");
+            googleMapsIcon.setHeight("30px");
+            googleMapsIcon.getStyle().set("cursor", "pointer");
+
+            // Lien enveloppant l'icône
+            Anchor mapsLink = new Anchor(mapUrl, googleMapsIcon);
+            mapsLink.setTarget("_blank");
+            mapsLink.getStyle().set("margin-left", "10px");
+
+            locationValueLayout.add(mapsLink);
+        }
+
         // Grille d'informations avec SVG
         Div infoGrid = new Div();
         infoGrid.getStyle()
@@ -117,12 +138,12 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
                 .set("width", "100%");
 
         infoGrid.add(
-                createSvgInfoRow("date_time.svg", "Début", event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH))),
-                createSvgInfoRow("date_fin.svg", "Fin", event.getDateFin().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH))),
-                createSvgInfoRow("ville.svg", "Ville", event.getVille()),
-                createSvgInfoRow("map.svg", "Lieu précis", event.getLieu()),
-                createSvgInfoRow("argent.svg", "Tarif", event.getPrixUnitaire() + " MAD"),
-                createSvgInfoRow("people.svg", "Disponibilité", event.getCapaciteRestante() + " places sur " + event.getCapaciteMax())
+                createSvgInfoRow("date_time.svg", "Début", new Span(event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH)))),
+                createSvgInfoRow("date_fin.svg", "Fin", new Span(event.getDateFin().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH)))),
+                createSvgInfoRow("ville.svg", "Ville", new Span(event.getVille())),
+                createSvgInfoRow("map.svg", "Lieu précis", locationValueLayout),
+                createSvgInfoRow("argent.svg", "Tarif", new Span(event.getPrixUnitaire() + " MAD")),
+                createSvgInfoRow("people.svg", "Disponibilité", new Span(event.getCapaciteRestante() + " places sur " + event.getCapaciteMax()))
         );
 
         infoCard.add(infoGrid);
@@ -166,10 +187,7 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         add(heroImage, mainContent);
     }
 
-    /**
-     * Crée une ligne d'information propre avec une icône SVG
-     */
-    private HorizontalLayout createSvgInfoRow(String svgName, String label, String value) {
+    private HorizontalLayout createSvgInfoRow(String svgName, String label, com.vaadin.flow.component.Component valueComponent) {
         HorizontalLayout row = new HorizontalLayout();
         row.setAlignItems(Alignment.CENTER);
         row.setSpacing(true);
@@ -186,10 +204,10 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
         Span labelSpan = new Span(label);
         labelSpan.getStyle().set("font-size", "0.85em").set("color", "#888").set("text-transform", "uppercase");
 
-        Span valueSpan = new Span(value);
-        valueSpan.getStyle().set("font-weight", "600").set("color", BRAND_BLUE);
+        // Appliquer le style au composant de valeur
+        valueComponent.getStyle().set("font-weight", "600").set("color", BRAND_BLUE);
 
-        textLayout.add(labelSpan, valueSpan);
+        textLayout.add(labelSpan, valueComponent);
         row.add(icon, textLayout);
         return row;
     }
