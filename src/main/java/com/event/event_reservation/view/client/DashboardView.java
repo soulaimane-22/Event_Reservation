@@ -1,17 +1,14 @@
 package com.event.event_reservation.view.client;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
 import com.event.event_reservation.dto.UserStatisticsDTO;
 import com.event.event_reservation.entity.User;
@@ -20,154 +17,147 @@ import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Dashboard CLIENT
- * URL: /dashboard
+ * Dashboard Client Épuré
+ * Focus : Statistiques uniquement
  */
 @Route(value = "dashboard", layout = VaadinAppLayout.class)
-@PageTitle("Dashboard - Event Reservation")
-public class DashboardView extends VerticalLayout {
+@PageTitle("Tableau de bord - Event Reservation")
+public class DashboardView extends VerticalLayout implements BeforeEnterObserver {
 
     private final UserService userService;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
+
+    private final VerticalLayout container = new VerticalLayout();
 
     @Autowired
     public DashboardView(UserService userService) {
         this.userService = userService;
 
+        // Configuration de base du layout racine
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
+        getStyle().set("background-color", "#f8f9fa");
 
+        // Conteneur de contenu centré
+        container.setWidthFull();
+        container.setMaxWidth("1200px");
+        container.getStyle().set("margin", "0 auto");
+        container.setPadding(true);
+        add(container);
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
         User currentUser = VaadinSession.getCurrentUser();
         if (currentUser == null) {
-            NavigationManager.goToLogin();
+            event.forwardTo("login");
             return;
         }
 
+        // Construction du contenu
+        container.removeAll();
         createHeader(currentUser);
-        createStatisticsCards(currentUser);
-        createQuickActions();
+        createStatisticsGrid(currentUser);
     }
 
-    /**
-     * Créer le header
-     */
     private void createHeader(User user) {
-        H1 title = new H1("👋 Bienvenue, " + user.getPrenom() + " !");
-        title.getStyle().set("margin-bottom", "0");
+        VerticalLayout header = new VerticalLayout();
+        header.setPadding(false);
+        header.setSpacing(false);
+        header.getStyle().set("margin", "40px 0");
 
-        Span subtitle = new Span("Voici un aperçu de votre activité");
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        H1 welcome = new H1("Bonjour, " + user.getPrenom()  + " " +  user.getNom() + " !");
+        welcome.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "800")
+                .set("margin", "0")
+                .set("font-size", "2.8em");
 
-        add(title, subtitle);
+        Span subtitle = new Span("Ravi de vous revoir. Voici un résumé de votre activité sur la plateforme.");
+        subtitle.getStyle()
+                .set("color", "#666")
+                .set("font-size", "1.2em")
+                .set("margin-top", "5px");
+
+        header.add(welcome, subtitle);
+        container.add(header);
     }
 
-    /**
-     * Créer les cartes de statistiques
-     */
-    private void createStatisticsCards(User user) {
+    private void createStatisticsGrid(User user) {
         UserStatisticsDTO stats = userService.getUserStatistics(user.getId());
 
-        HorizontalLayout cards = new HorizontalLayout();
-        cards.setWidthFull();
-        cards.setSpacing(true);
-        cards.getStyle().set("flex-wrap", "wrap");
+        // Grille adaptative pour les cartes
+        Div grid = new Div();
+        grid.setWidthFull();
+        grid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fit, minmax(320px, 1fr))")
+                .set("gap", "30px");
 
-        // Carte 1: Nombre de réservations
-        Div reservationsCard = createStatCard(
-                VaadinIcon.TICKET,
-                "Réservations",
+        // Carte 1 : Réservations
+        grid.add(createStatCard(
+                "statistics.svg",
+                "Réservations effectuées",
                 String.valueOf(stats.getReservationsCount()),
                 "#3b82f6"
-        );
+        ));
 
-        // Carte 2: Événements créés (si organisateur)
-        Div eventsCard = createStatCard(
-                VaadinIcon.CALENDAR,
+        // Carte 2 : Événements (Si applicable)
+        grid.add(createStatCard(
+                "statistics.svg",
                 "Événements organisés",
                 String.valueOf(stats.getEventsCreated()),
                 "#8b5cf6"
-        );
+        ));
 
-        // Carte 3: Montant dépensé
-        Div spentCard = createStatCard(
-                VaadinIcon.DOLLAR,
-                "Total dépensé",
-                stats.getTotalSpent() + " DH",
+        // Carte 3 : Dépenses
+        grid.add(createStatCard(
+                "statistics.svg",
+                "Investissement Total",
+                stats.getTotalSpent() + " MAD",
                 "#10b981"
-        );
+        ));
 
-        cards.add(reservationsCard, eventsCard, spentCard);
-        add(cards);
+        container.add(grid);
     }
 
-    /**
-     * Créer une carte de statistique
-     */
-    private Div createStatCard(VaadinIcon icon, String label, String value, String color) {
+    private Div createStatCard(String iconName, String label, String value, String color) {
         Div card = new Div();
-        card.setWidth("300px");
         card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "10px")
-                .set("padding", "1.5em")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)")
-                .set("border-left", "4px solid " + color);
+                .set("background-color", "white")
+                .set("border-radius", "25px")
+                .set("padding", "40px")
+                .set("box-shadow", "0 15px 35px rgba(0,0,0,0.05)")
+                .set("border-top", "6px solid " + color) // Accent de couleur en haut pour changer du bord gauche
+                .set("transition", "transform 0.3s ease");
 
-        // Icône
-        icon.create().setSize("32px");
-        icon.create().setColor(color);
+        Image icon = new Image(ICON_PATH + iconName, "");
+        icon.setHeight("35px");
 
-        // Label
-        Span labelSpan = new Span(label);
-        labelSpan.getStyle()
-                .set("color", "#666")
-                .set("font-size", "0.9em")
+        Span val = new Span(value);
+        val.getStyle()
+                .set("font-size", "2.5em")
+                .set("font-weight", "800")
+                .set("color", BRAND_BLUE)
                 .set("display", "block")
-                .set("margin-top", "0.5em");
+                .set("margin", "15px 0 5px 0");
 
-        // Valeur
-        Span valueSpan = new Span(value);
-        valueSpan.getStyle()
-                .set("color", "#333")
-                .set("font-size", "2em")
-                .set("font-weight", "bold")
-                .set("display", "block");
+        Span lbl = new Span(label);
+        lbl.getStyle()
+                .set("color", "#888")
+                .set("text-transform", "uppercase")
+                .set("font-size", "0.9em")
+                .set("font-weight", "600")
+                .set("letter-spacing", "1px");
 
-        VerticalLayout content = new VerticalLayout(icon.create(), labelSpan, valueSpan);
-        content.setPadding(false);
-        content.setSpacing(false);
+        card.add(icon, val, lbl);
 
-        card.add(content);
+        // Effet au survol
+        card.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-10px)'; };" +
+                "this.onmouseout = () => { this.style.transform = 'translateY(0)'; };");
+
         return card;
-    }
-
-    /**
-     * Créer les actions rapides
-     */
-    private void createQuickActions() {
-        H2 actionsTitle = new H2("🚀 Actions Rapides");
-        actionsTitle.getStyle().set("margin-top", "2em");
-
-        HorizontalLayout actions = new HorizontalLayout();
-        actions.setSpacing(true);
-        actions.getStyle().set("flex-wrap", "wrap");
-
-        // Bouton: Voir les événements
-        Button eventsBtn = new Button("Explorer les événements", VaadinIcon.CALENDAR.create());
-        eventsBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        eventsBtn.addClickListener(e -> NavigationManager.goToEventList());
-
-        // Bouton: Mes réservations
-        Button reservationsBtn = new Button("Mes réservations", VaadinIcon.TICKET.create());
-        reservationsBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
-        reservationsBtn.addClickListener(e -> NavigationManager.goToMyReservations());
-
-        // Bouton: Mon profil
-        Button profileBtn = new Button("Mon profil", VaadinIcon.USER.create());
-        profileBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        profileBtn.addClickListener(e -> NavigationManager.goToProfile());
-
-        actions.add(eventsBtn, reservationsBtn, profileBtn);
-        add(actionsTitle, actions);
     }
 }

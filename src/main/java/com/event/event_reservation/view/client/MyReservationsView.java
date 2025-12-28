@@ -1,15 +1,17 @@
 package com.event.event_reservation.view.client;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -28,15 +30,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Page Mes Réservations
- * URL: /my-reservations
- */
 @Route(value = "my-reservations", layout = VaadinAppLayout.class)
 @PageTitle("Mes Réservations - Event Reservation")
 public class MyReservationsView extends VerticalLayout {
 
     private final ReservationService reservationService;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
 
     private Grid<Reservation> grid;
     private TextField searchField;
@@ -49,120 +49,156 @@ public class MyReservationsView extends VerticalLayout {
     public MyReservationsView(ReservationService reservationService) {
         this.reservationService = reservationService;
 
-        currentUser = VaadinSession.getCurrentUser();
+        this.currentUser = VaadinSession.getCurrentUser();
         if (currentUser == null) {
-            NavigationManager.goToLogin();
+            UI.getCurrent().navigate("login");
             return;
         }
 
+        // Configuration Layout Racine
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
+        getStyle().set("background-color", "#f8f9fa");
 
-        createHeader();
-        createFilters();
-        createGrid();
+        // Conteneur de contenu centré (Edge-to-Edge feel)
+        VerticalLayout container = new VerticalLayout();
+        container.setWidthFull();
+        container.setMaxWidth("1200px");
+        container.getStyle().set("margin", "0 auto");
+        container.setPadding(true);
+
+        createHeader(container);
+        createFilters(container);
+        createGrid(container);
 
         loadReservations();
+        add(container);
     }
 
-    /**
-     * Créer le header
-     */
-    private void createHeader() {
-        H1 title = new H1("🎫 Mes Réservations");
-        title.getStyle().set("margin-bottom", "0");
+    private void createHeader(VerticalLayout container) {
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.getStyle().set("margin", "30px 0");
 
-        Span subtitle = new Span("Gérez toutes vos réservations d'événements");
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        Image ticketIcon = new Image(ICON_PATH + "ticket.svg", "");
+        ticketIcon.setWidth("50px");
 
-        add(title, subtitle);
+        VerticalLayout titleLayout = new VerticalLayout();
+        titleLayout.setPadding(false);
+        titleLayout.setSpacing(false);
+
+        H1 title = new H1("Mes Réservations");
+        title.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "800")
+                .set("margin", "0")
+                .set("font-size", "2.5em");
+
+        Span subtitle = new Span("Gérez vos accès et l'historique de vos billets");
+        subtitle.getStyle().set("color", "#666").set("font-size", "1.1em");
+
+        titleLayout.add(title, subtitle);
+        header.add(ticketIcon, titleLayout);
+        container.add(header);
     }
 
-    /**
-     * Créer les filtres
-     */
-    private void createFilters() {
-        HorizontalLayout filters = new HorizontalLayout();
-        filters.setWidthFull();
-        filters.setSpacing(true);
-        filters.getStyle().set("flex-wrap", "wrap");
+    private void createFilters(VerticalLayout container) {
+        HorizontalLayout filterCard = new HorizontalLayout();
+        filterCard.setWidthFull();
+        filterCard.setAlignItems(Alignment.END);
+        filterCard.setSpacing(true);
+        filterCard.getStyle()
+                .set("background-color", "white")
+                .set("padding", "25px")
+                .set("border-radius", "15px")
+                .set("box-shadow", "0 4px 15px rgba(0,0,0,0.05)")
+                .set("margin-bottom", "30px");
 
-        // Recherche par code
-        searchField = new TextField();
-        searchField.setPlaceholder("Rechercher par code...");
-        searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
-        searchField.setWidth("300px");
+        // Recherche par code avec icône
+        searchField = new TextField("Rechercher un code");
+        searchField.setPlaceholder("Ex: RES-123...");
+        Image searchIcon = new Image(ICON_PATH + "recherche.svg", "");
+        searchIcon.setWidth("18px");
+        searchField.setPrefixComponent(searchIcon);
+        searchField.setWidth("350px");
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
         searchField.addValueChangeListener(e -> applyFilters());
 
         // Filtre statut
-        statusFilter = new ComboBox<>("Statut");
+        statusFilter = new ComboBox<>("Filtrer par statut");
         statusFilter.setItems(ReservationStatus.values());
-        statusFilter.setPlaceholder("Tous");
-        statusFilter.setWidth("200px");
+        statusFilter.setPlaceholder("Tous les statuts");
+        statusFilter.setWidth("250px");
         statusFilter.addValueChangeListener(e -> applyFilters());
 
         // Bouton réinitialiser
-        Button resetBtn = new Button("Réinitialiser", VaadinIcon.REFRESH.create());
+        Button resetBtn = new Button("Réinitialiser");
+        Image resetIcon = new Image(ICON_PATH + "reinitialiser.svg", "");
+        resetIcon.setWidth("18px");
+        resetBtn.setIcon(resetIcon);
+        resetBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        resetBtn.getStyle().set("color", BRAND_BLUE).set("font-weight", "600");
         resetBtn.addClickListener(e -> resetFilters());
 
-        filters.add(searchField, statusFilter, resetBtn);
-        add(filters);
+        filterCard.add(searchField, statusFilter, resetBtn);
+        filterCard.setFlexGrow(1, searchField);
+        container.add(filterCard);
     }
 
-    /**
-     * Créer la grille
-     */
-    private void createGrid() {
+    private void createGrid(VerticalLayout container) {
         grid = new Grid<>(Reservation.class, false);
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
+        grid.getStyle()
+                .set("border-radius", "15px")
+                .set("overflow", "hidden")
+                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.03)");
         grid.setHeight("600px");
 
-        // Colonne Code
         grid.addColumn(Reservation::getCodeReservation)
-                .setHeader("Code")
-                .setAutoWidth(true);
-
-        // Colonne Événement
-        grid.addColumn(r -> r.getEvenement().getTitre())
-                .setHeader("Événement")
+                .setHeader("CODE")
                 .setAutoWidth(true)
-                .setFlexGrow(1);
+                .setSortable(true);
 
-        // Colonne Date
-        grid.addColumn(r -> r.getDateReservation().format(
-                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-        )).setHeader("Date réservation").setAutoWidth(true);
+        grid.addColumn(r -> r.getEvenement().getTitre())
+                .setHeader("ÉVÉNEMENT")
+                .setFlexGrow(1)
+                .setSortable(true);
 
-        // Colonne Places
+        grid.addColumn(r -> r.getDateReservation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
+                .setHeader("DATE ACHAT")
+                .setAutoWidth(true);
+
         grid.addColumn(Reservation::getNombrePlaces)
-                .setHeader("Places")
+                .setHeader("PLACES")
+                .setTextAlign(ColumnTextAlign.CENTER)
                 .setAutoWidth(true);
 
-        // Colonne Montant
-        grid.addColumn(r -> r.getMontantTotal() + " DH")
-                .setHeader("Montant")
+        grid.addColumn(r -> r.getMontantTotal() + " MAD")
+                .setHeader("MONTANT")
                 .setAutoWidth(true);
 
-        // Colonne Statut
         grid.addComponentColumn(this::createStatusBadge)
-                .setHeader("Statut")
+                .setHeader("STATUT")
                 .setAutoWidth(true);
 
-        // Colonne Actions
         grid.addComponentColumn(this::createActions)
-                .setHeader("Actions")
+                .setHeader("ACTIONS")
+                .setTextAlign(ColumnTextAlign.END)
                 .setAutoWidth(true);
 
-        add(grid);
+        container.add(grid);
     }
 
-    /**
-     * Créer le badge de statut
-     */
     private Span createStatusBadge(Reservation reservation) {
         Span badge = new Span(reservation.getStatut().toString());
-        badge.getElement().getThemeList().add("badge");
+        var s = badge.getStyle();
+        s.set("padding", "6px 12px");
+        s.set("border-radius", "20px");
+        s.set("font-size", "0.8em");
+        s.set("font-weight", "bold");
+        s.set("color", "white");
 
         String color = switch (reservation.getStatut()) {
             case CONFIRMEE -> "#10b981";
@@ -170,127 +206,73 @@ public class MyReservationsView extends VerticalLayout {
             case ANNULEA -> null;
             case ANNULEE -> "#ef4444";
         };
-
-        badge.getStyle()
-                .set("background", color)
-                .set("color", "white")
-                .set("padding", "4px 8px")
-                .set("border-radius", "4px")
-                .set("font-size", "0.85em");
+        s.set("background-color", color);
 
         return badge;
     }
 
-    /**
-     * Créer les actions
-     */
     private HorizontalLayout createActions(Reservation reservation) {
         HorizontalLayout actions = new HorizontalLayout();
-        actions.setSpacing(true);
+        actions.setJustifyContentMode(JustifyContentMode.END);
 
-        // Bouton Voir détails
-        Button detailsBtn = new Button(VaadinIcon.EYE.create());
+        Button detailsBtn = new Button("Voir");
         detailsBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-        detailsBtn.addClickListener(e ->
-                NavigationManager.goToEventDetail(reservation.getEvenement().getId())
-        );
+        detailsBtn.getStyle().set("color", BRAND_BLUE).set("font-weight", "700");
+        detailsBtn.addClickListener(e -> NavigationManager.goToEventDetail(reservation.getEvenement().getId()));
 
-        // Bouton Annuler (si possible)
+        actions.add(detailsBtn);
+
         if (reservation.getStatut() == ReservationStatus.CONFIRMEE) {
-            Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
-            cancelBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
+            Button cancelBtn = new Button("Annuler");
+            cancelBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
             cancelBtn.addClickListener(e -> confirmCancellation(reservation));
             actions.add(cancelBtn);
         }
 
-        actions.add(detailsBtn);
         return actions;
     }
 
-    /**
-     * Confirmer l'annulation
-     */
     private void confirmCancellation(Reservation reservation) {
-        ConfirmDialog dialog = new ConfirmDialog();
-        dialog.setHeader("Annuler la réservation ?");
-        dialog.setText("Êtes-vous sûr de vouloir annuler cette réservation ? Code: " +
-                reservation.getCodeReservation());
-
-        dialog.setCancelable(true);
-        dialog.setCancelText("Non");
-
-        dialog.setConfirmText("Oui, annuler");
+        ConfirmDialog dialog = new ConfirmDialog("Annuler la réservation",
+                "Êtes-vous sûr de vouloir annuler la réservation " + reservation.getCodeReservation() + " ?",
+                "Oui, annuler", e -> handleCancellation(reservation),
+                "Non, garder", e -> {});
         dialog.setConfirmButtonTheme("error primary");
-
-        dialog.addConfirmListener(e -> handleCancellation(reservation));
-
         dialog.open();
     }
 
-    /**
-     * Gérer l'annulation
-     */
     private void handleCancellation(Reservation reservation) {
         try {
             reservationService.cancelReservation(reservation.getId());
-            showSuccess("Réservation annulée avec succès");
+            Notification.show("Réservation annulée avec succès", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             loadReservations();
-        } catch (IllegalArgumentException e) {
-            showError(e.getMessage());
+        } catch (Exception e) {
+            Notification.show(e.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
-    /**
-     * Charger les réservations
-     */
     private void loadReservations() {
         allReservations = reservationService.getUserReservations(currentUser.getId());
         grid.setItems(allReservations);
     }
 
-    /**
-     * Appliquer les filtres
-     */
     private void applyFilters() {
-        String searchTerm = searchField.getValue().toLowerCase().trim();
+        String query = searchField.getValue().toLowerCase().trim();
         ReservationStatus status = statusFilter.getValue();
 
         List<Reservation> filtered = allReservations.stream()
-                .filter(r -> {
-                    boolean matchSearch = searchTerm.isEmpty() ||
-                            r.getCodeReservation().toLowerCase().contains(searchTerm);
-
-                    boolean matchStatus = status == null || r.getStatut() == status;
-
-                    return matchSearch && matchStatus;
-                })
+                .filter(r -> (query.isEmpty() || r.getCodeReservation().toLowerCase().contains(query)) &&
+                        (status == null || r.getStatut() == status))
                 .toList();
 
         grid.setItems(filtered);
     }
 
-    /**
-     * Réinitialiser les filtres
-     */
     private void resetFilters() {
         searchField.clear();
         statusFilter.clear();
         grid.setItems(allReservations);
-    }
-
-    /**
-     * Afficher un message de succès
-     */
-    private void showSuccess(String message) {
-        Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
-        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-    }
-
-    /**
-     * Afficher un message d'erreur
-     */
-    private void showError(String message) {
-        Notification notification = Notification.show(message, 4000, Notification.Position.TOP_CENTER);
-        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

@@ -21,6 +21,7 @@ public class VaadinAppLayout extends AppLayout {
 
     private boolean isDarkMode = false;
     private final String BRAND_COLOR = "#253366";
+    private final String BRAND_VARIANT = "#435591"; // Couleur variante pour le profil
     private final String ICON_PATH = "images/events/icons/";
     private final VerticalLayout footerContainer = new VerticalLayout();
 
@@ -44,7 +45,7 @@ public class VaadinAppLayout extends AppLayout {
         pageView.getStyle().set("flex-grow", "1");
         pageView.getElement().appendChild(content.getElement());
 
-        // STRUCTURE : 1. Page | 2. Features Section (Bold) | 3. Footer
+        // STRUCTURE : 1. Page | 2. Features Section (Bold 800) | 3. Footer
         mainLayout.add(pageView, buildFeaturesSection(), footerContainer);
         setContent(mainLayout);
     }
@@ -56,14 +57,13 @@ public class VaadinAppLayout extends AppLayout {
         VerticalLayout section = new VerticalLayout();
         section.setWidthFull();
         section.setAlignItems(FlexComponent.Alignment.CENTER);
-        // Fond très légèrement grisé pour faire ressortir les cartes blanches
         section.getStyle().set("padding", "80px 10%").set("background-color", "#fcfdfe");
 
-        // TITRE DE SECTION (BOLD)
+        // TITRE DE SECTION (BOLD 800)
         H2 sectionTitle = new H2("Fonctionnalités Clés de votre plateforme");
         sectionTitle.getStyle()
                 .set("color", BRAND_COLOR)
-                .set("font-weight", "800") // BOLD
+                .set("font-weight", "800")
                 .set("font-size", "2.2em")
                 .set("margin-bottom", "50px");
 
@@ -72,14 +72,12 @@ public class VaadinAppLayout extends AppLayout {
         cardsContainer.setSpacing(true);
         cardsContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        // Carte 1 : Confort Multi-écran
         cardsContainer.add(createFeatureCard(
                 "monitor.svg",
                 "Confort Multi-écran",
                 "Profitez d’une ergonomie parfaite sur mobile, tablette et ordinateur. Notre plateforme s'adapte à vos outils pour vous offrir une navigation sans aucune friction."
         ));
 
-        // Carte 2 : Passions sur Mesure
         cardsContainer.add(createFeatureCard(
                 "ticket.svg",
                 "Passions sur Mesure",
@@ -96,7 +94,6 @@ public class VaadinAppLayout extends AppLayout {
         card.setPadding(true);
         card.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        // STYLE PREMIUM (IDENTIQUE AUX CARTES EVENTS)
         var s = card.getStyle();
         s.set("background-color", "white");
         s.set("border-radius", "25px");
@@ -108,24 +105,19 @@ public class VaadinAppLayout extends AppLayout {
         icon.setHeight("70px");
         icon.getStyle().set("margin-bottom", "25px");
 
-        // TITRE DE LA CARTE (BOLD)
+        // TITRE DE LA CARTE (BOLD 800)
         H3 h3 = new H3(title);
         h3.getStyle()
                 .set("color", BRAND_COLOR)
-                .set("font-weight", "800") // BOLD
+                .set("font-weight", "800")
                 .set("margin", "0 0 20px 0")
                 .set("font-size", "1.5em");
 
         Paragraph p = new Paragraph(description);
-        p.getStyle()
-                .set("text-align", "center")
-                .set("color", "#555")
-                .set("line-height", "1.7")
-                .set("font-size", "1.05em");
+        p.getStyle().set("text-align", "center").set("color", "#555").set("line-height", "1.7").set("font-size", "1.05em");
 
         card.add(icon, h3, p);
 
-        // Effet Hover Java
         card.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-12px)'; };" +
                 "this.onmouseout = () => { this.style.transform = 'translateY(0)'; };");
 
@@ -138,27 +130,45 @@ public class VaadinAppLayout extends AppLayout {
         logo.getStyle().set("cursor", "pointer").set("margin-top", "-20px").set("margin-bottom", "-20px");
         logo.addClickListener(e -> NavigationManager.goToHome());
 
-        HorizontalLayout publicNav = new HorizontalLayout();
-        Button eventsBtn = new Button("Événements");
-        eventsBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        eventsBtn.getStyle().set("color", BRAND_COLOR).set("font-weight", "700").set("font-size", "1.1em");
-        eventsBtn.addClickListener(e -> NavigationManager.goToEventList());
-        publicNav.add(eventsBtn);
+        // --- 2. NAVIGATION CENTRALE (DÉPLACEMENT DES LIENS CLIENT ICI) ---
+        HorizontalLayout navMenu = new HorizontalLayout();
+        navMenu.setSpacing(true);
+        navMenu.setAlignItems(FlexComponent.Alignment.CENTER);
 
+        // Bouton Événements (Toujours là)
+        navMenu.add(createNavButton("Événements", e -> NavigationManager.goToEventList()));
+
+        // Si connecté, on ajoute le Dashboard, les Réservations et le Profil
+        if (VaadinSession.isUserLoggedIn()) {
+            navMenu.add(
+                    createNavButton("Tableau de bord", e -> NavigationManager.goToDashboard()),
+                    createNavButton("Mes Réservations", e -> NavigationManager.goToMyReservations()),
+                    createNavButton("Mon Profil", e -> NavigationManager.goToProfile())
+            );
+        }
+
+        // --- 3. ACTIONS DROITE ---
         HorizontalLayout rightSide = new HorizontalLayout();
         rightSide.setAlignItems(FlexComponent.Alignment.CENTER);
         rightSide.setSpacing(true);
 
         HorizontalLayout authLayout = new HorizontalLayout();
+        authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+
         if (VaadinSession.isUserLoggedIn()) {
-            User user = VaadinSession.getCurrentUser();
-            Span name = new Span(user.getPrenom());
-            name.getStyle().set("color", BRAND_COLOR).set("font-weight", "bold");
+            User currentUser = VaadinSession.getCurrentUser();
+            // AFFICHAGE NOM/PRENOM EN COULEUR VARIANTE
+            Span userName = new Span(currentUser.getPrenom() + " " + currentUser.getNom());
+            userName.getStyle()
+                    .set("color", BRAND_VARIANT)
+                    .set("font-weight", "bold")
+                    .set("margin-right", "15px");
+
             Button logoutBtn = new Button("Déconnexion", VaadinIcon.SIGN_OUT.create());
             logoutBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
             logoutBtn.getStyle().set("color", BRAND_COLOR);
-            logoutBtn.addClickListener(e -> { VaadinSession.logout(); NavigationManager.goToLogin(); });
-            authLayout.add(name, logoutBtn);
+            logoutBtn.addClickListener(e -> handleLogout());
+            authLayout.add(userName, logoutBtn);
         } else {
             Button loginBtn = new Button("Connexion", new Image(ICON_PATH + "connexion.svg", ""));
             loginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -171,6 +181,7 @@ public class VaadinAppLayout extends AppLayout {
             authLayout.add(loginBtn, registerBtn);
         }
 
+        // RECHERCHE INTERACTIVE
         TextField searchInput = new TextField();
         searchInput.setPlaceholder("Rechercher...");
         searchInput.setVisible(false);
@@ -183,10 +194,12 @@ public class VaadinAppLayout extends AppLayout {
             if (!searchInput.isVisible()) {
                 searchInput.setVisible(true); searchInput.setWidth("200px"); searchInput.focus();
             } else {
+                if (!searchInput.getValue().isEmpty()) UI.getCurrent().navigate("events");
                 searchInput.setVisible(false); searchInput.setWidth("0px");
             }
         });
 
+        // DARK MODE
         Button themeToggle = new Button(new Image(ICON_PATH + "dark_mode.svg", ""));
         themeToggle.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         themeToggle.addClickListener(e -> toggleTheme(themeToggle));
@@ -194,16 +207,30 @@ public class VaadinAppLayout extends AppLayout {
         rightSide.add(authLayout, searchInput, searchBtn, themeToggle);
 
         HorizontalLayout header = new HorizontalLayout();
-        if (VaadinSession.isUserLoggedIn()) header.add(new DrawerToggle());
-        header.add(logo, publicNav, rightSide);
+        User user = VaadinSession.getCurrentUser();
+        if (user != null && (user.getRole() == UserRole.ORGANIZER || user.getRole() == UserRole.ADMIN)) {
+            header.add(new DrawerToggle());
+        }
+
+        header.add(logo, navMenu, rightSide);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
-        header.setPadding(true);
         header.getStyle().set("padding", "0 30px").set("background-color", "white").set("border-bottom", "1px solid #eee");
-        header.setFlexGrow(1, publicNav);
-        publicNav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        header.setFlexGrow(1, navMenu);
+        navMenu.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
         addToNavbar(header);
+    }
+
+    private Button createNavButton(String text, com.vaadin.flow.component.ComponentEventListener<com.vaadin.flow.component.ClickEvent<Button>> listener) {
+        Button btn = new Button(text);
+        btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        btn.getStyle()
+                .set("color", BRAND_COLOR)
+                .set("font-weight", "700")
+                .set("font-size", "1.1em");
+        btn.addClickListener(listener);
+        return btn;
     }
 
     private void buildFooter() {
@@ -267,10 +294,7 @@ public class VaadinAppLayout extends AppLayout {
 
     private Image createSocialIcon(String fileName) {
         Image img = new Image(ICON_PATH + fileName, "");
-        img.setHeight("28px");
-        img.getStyle().set("cursor", "pointer").set("transition", "0.2s");
-        img.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-5px)'; };" +
-                "this.onmouseout = () => { this.style.transform = 'translateY(0)'; };");
+        img.setHeight("28px"); img.getStyle().set("cursor", "pointer").set("transition", "0.2s");
         return img;
     }
 
@@ -292,33 +316,31 @@ public class VaadinAppLayout extends AppLayout {
     private void createDrawer() {
         User currentUser = VaadinSession.getCurrentUser();
         if (currentUser == null) { setDrawerOpened(false); return; }
+
         VerticalLayout drawer = new VerticalLayout();
         drawer.setPadding(false); drawer.setSpacing(false);
         UserRole role = currentUser.getRole();
-        if (role == UserRole.CLIENT || role == UserRole.ORGANIZER || role == UserRole.ADMIN) {
-            drawer.add(createSectionTitle("Mon Espace"), createClientMenu());
-        }
+
+        // PLUS DE SECTION CLIENT ICI -> ELLE EST DANS LE HEADER
         if (role == UserRole.ORGANIZER || role == UserRole.ADMIN) {
-            drawer.add(new Hr(), createSectionTitle("Organisateur"), createOrganizerMenu());
+            drawer.add(createSectionTitle("Espace Organisateur"), createOrganizerMenu());
         }
         if (role == UserRole.ADMIN) {
-            drawer.add(new Hr(), createSectionTitle("Administration"), createAdminMenu());
+            drawer.add(new Hr(), createSectionTitle("Outils Administration"), createAdminMenu());
         }
-        addToDrawer(drawer);
-        setDrawerOpened(false);
+
+        if (role == UserRole.CLIENT) {
+            setDrawerOpened(false);
+        } else {
+            addToDrawer(drawer);
+            setDrawerOpened(false);
+        }
     }
 
     private Span createSectionTitle(String title) {
         Span span = new Span(title);
         span.getStyle().set("font-weight", "bold").set("font-size", "0.8em").set("color", BRAND_COLOR).set("padding", "20px 25px 5px 25px").set("text-transform", "uppercase");
         return span;
-    }
-
-    private VerticalLayout createClientMenu() {
-        VerticalLayout m = new VerticalLayout(); m.setPadding(false); m.setSpacing(false);
-        m.add(createMenuButton("Dashboard", VaadinIcon.DASHBOARD, e -> NavigationManager.goToDashboard()),
-                createMenuButton("Réservations", VaadinIcon.TICKET, e -> NavigationManager.goToMyReservations()));
-        return m;
     }
 
     private VerticalLayout createOrganizerMenu() {
@@ -341,5 +363,10 @@ public class VaadinAppLayout extends AppLayout {
         b.getStyle().set("justify-content", "flex-start").set("padding-left", "25px").set("color", BRAND_COLOR);
         b.addClickListener(listener);
         return b;
+    }
+
+    private void handleLogout() {
+        VaadinSession.logout();
+        NavigationManager.goToLogin(); // REDIRECTION VERS ACCUEIL
     }
 }

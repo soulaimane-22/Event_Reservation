@@ -32,9 +32,12 @@ public class Reservation {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal montantTotal;
 
+    // FIX 1 : @Builder.Default force le Builder à utiliser cette valeur par défaut
+    @Builder.Default
     @Column(nullable = false)
     private LocalDateTime dateReservation = LocalDateTime.now();
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus statut = ReservationStatus.EN_ATTENTE;
@@ -42,9 +45,11 @@ public class Reservation {
     @Column(length = 1000)
     private String commentaire;
 
+    @Builder.Default
     @Column
     private Boolean emailConfirmationEnvoye = false;
 
+    @Builder.Default
     @Column
     private Boolean emailRappelEnvoye = false;
 
@@ -65,4 +70,15 @@ public class Reservation {
 
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.REMOVE)
     private java.util.List<EmailLog> emailLogs;
+
+    // FIX 2 : Sécurité ultime avant l'insertion en base de données
+    @PrePersist
+    protected void onCreate() {
+        if (this.dateReservation == null) {
+            this.dateReservation = LocalDateTime.now();
+        }
+        if (this.statut == null) {
+            this.statut = ReservationStatus.EN_ATTENTE;
+        }
+    }
 }

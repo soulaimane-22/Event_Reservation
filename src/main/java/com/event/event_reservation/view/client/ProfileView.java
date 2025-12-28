@@ -1,15 +1,13 @@
 package com.event.event_reservation.view.client;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -24,67 +22,145 @@ import com.event.event_reservation.service.UserService;
 import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * Page Mon Profil
- * URL: /profile
- */
 @Route(value = "profile", layout = VaadinAppLayout.class)
 @PageTitle("Mon Profil - Event Reservation")
 public class ProfileView extends VerticalLayout {
 
     private final UserService userService;
+    private final User currentUser;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
 
-    private User currentUser;
-
-    private TextField nomField;
-    private TextField prenomField;
-    private TextField emailField;
-    private TextField telephoneField;
+    private TextField nomField, prenomField, emailField, telephoneField;
 
     @Autowired
     public ProfileView(UserService userService) {
         this.userService = userService;
+        this.currentUser = VaadinSession.getCurrentUser();
 
-        currentUser = VaadinSession.getCurrentUser();
         if (currentUser == null) {
-            NavigationManager.goToLogin();
+            UI.getCurrent().navigate("login");
             return;
         }
 
+        // Configuration Layout (Edge-to-Edge feel)
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-        setMaxWidth("800px");
-        getStyle().set("margin", "0 auto");
+        setPadding(false);
+        setSpacing(false);
+        getStyle().set("background-color", "#f8f9fa");
 
-        createHeader();
-        createProfileForm();
-        createPasswordForm();
-        createStatistics();
-        createDangerZone();
+        // Container centré pour le contenu
+        VerticalLayout content = new VerticalLayout();
+        content.setWidthFull();
+        content.setMaxWidth("1200px");
+        content.getStyle().set("margin", "0 auto");
+        content.setPadding(true);
+        content.setSpacing(true);
+
+        createHeader(content);
+        createStatsSection(content);
+
+        // Grille pour les formulaires
+        Div formsGrid = new Div();
+        formsGrid.setWidthFull();
+        formsGrid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fit, minmax(400px, 1fr))")
+                .set("gap", "30px")
+                .set("margin-top", "20px");
+
+        createProfileForm(formsGrid);
+        createPasswordForm(formsGrid);
+
+        content.add(formsGrid);
+        createDangerZone(content);
+
+        add(content);
     }
 
-    /**
-     * Créer le header
-     */
-    private void createHeader() {
-        H1 title = new H1("👤 Mon Profil");
-        title.getStyle().set("margin-bottom", "0");
+    private void createHeader(VerticalLayout container) {
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.getStyle().set("margin", "30px 0");
 
-        Span subtitle = new Span("Gérez vos informations personnelles");
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        Image clientIcon = new Image(ICON_PATH + "client.svg", "");
+        clientIcon.setWidth("60px");
 
-        add(title, subtitle);
+        VerticalLayout textLayout = new VerticalLayout();
+        textLayout.setPadding(false);
+        textLayout.setSpacing(false);
+
+        H1 title = new H1(currentUser.getPrenom() + " " + currentUser.getNom());
+        title.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "800")
+                .set("margin", "0")
+                .set("font-size", "2.5em");
+
+        Span subtitle = new Span("Gestion de votre compte personnel");
+        subtitle.getStyle().set("color", "#666").set("font-size", "1.1em");
+
+        textLayout.add(title, subtitle);
+        header.add(clientIcon, textLayout);
+        container.add(header);
     }
 
-    /**
-     * Créer le formulaire de profil
-     */
-    private void createProfileForm() {
-        VerticalLayout card = createCard();
+    private void createStatsSection(VerticalLayout container) {
+        UserStatisticsDTO stats = userService.getUserStatistics(currentUser.getId());
 
-        H2 cardTitle = new H2("📝 Informations personnelles");
-        cardTitle.getStyle().set("margin-top", "0");
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(false);
+
+        HorizontalLayout titleRow = createSectionHeader("statistics.svg", "Mes Statistiques");
+
+        Div statsGrid = new Div();
+        statsGrid.setWidthFull();
+        statsGrid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fit, minmax(250px, 1fr))")
+                .set("gap", "20px");
+
+        statsGrid.add(
+                createStatCard("Réservations", String.valueOf(stats.getReservationsCount()), "#3b82f6"),
+                createStatCard("Événements", String.valueOf(stats.getEventsCreated()), "#8b5cf6"),
+                createStatCard("Total Dépensé", stats.getTotalSpent() + " DH", "#10b981")
+        );
+
+        section.add(titleRow, statsGrid);
+        container.add(section);
+    }
+
+    private VerticalLayout createStatCard(String label, String value, String color) {
+        VerticalLayout card = new VerticalLayout();
+        card.setAlignItems(Alignment.CENTER);
+        card.getStyle()
+                .set("background-color", "white")
+                .set("border-radius", "20px")
+                .set("box-shadow", "0 10px 25px rgba(0,0,0,0.05)")
+                .set("padding", "30px");
+
+        Span val = new Span(value);
+        val.getStyle()
+                .set("font-size", "2.2em")
+                .set("font-weight", "800")
+                .set("color", color);
+
+        Span lbl = new Span(label);
+        lbl.getStyle()
+                .set("color", "#888")
+                .set("text-transform", "uppercase")
+                .set("font-weight", "600")
+                .set("font-size", "0.85em")
+                .set("letter-spacing", "1px");
+
+        card.add(val, lbl);
+        return card;
+    }
+
+    private void createProfileForm(Div parent) {
+        VerticalLayout card = createStyledCard();
+        card.add(createSectionHeader("information.svg", "Informations personnelles"));
 
         nomField = new TextField("Nom");
         nomField.setValue(currentUser.getNom());
@@ -98,261 +174,134 @@ public class ProfileView extends VerticalLayout {
         emailField.setValue(currentUser.getEmail());
         emailField.setWidthFull();
         emailField.setEnabled(false);
-        emailField.setHelperText("L'email ne peut pas être modifié");
 
         telephoneField = new TextField("Téléphone");
-        if (currentUser.getTelephone() != null) {
-            telephoneField.setValue(currentUser.getTelephone());
-        }
+        telephoneField.setValue(currentUser.getTelephone() != null ? currentUser.getTelephone() : "");
         telephoneField.setWidthFull();
 
-        Button saveBtn = new Button("Sauvegarder", VaadinIcon.CHECK.create());
+        Button saveBtn = new Button("Sauvegarder les modifications");
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveBtn.getStyle().set("background-color", BRAND_BLUE).set("margin-top", "20px");
+        saveBtn.setWidthFull();
         saveBtn.addClickListener(e -> handleSaveProfile());
 
-        card.add(cardTitle, nomField, prenomField, emailField, telephoneField, saveBtn);
-        add(card);
+        card.add(nomField, prenomField, emailField, telephoneField, saveBtn);
+        parent.add(card);
     }
 
-    /**
-     * Créer le formulaire de changement de mot de passe
-     */
-    private void createPasswordForm() {
-        VerticalLayout card = createCard();
+    private void createPasswordForm(Div parent) {
+        VerticalLayout card = createStyledCard();
+        card.add(createSectionHeader("password.svg", "Sécurité du compte"));
 
-        H2 cardTitle = new H2("🔒 Changer le mot de passe");
-        cardTitle.getStyle().set("margin-top", "0");
+        PasswordField oldP = new PasswordField("Mot de passe actuel");
+        PasswordField newP = new PasswordField("Nouveau mot de passe");
+        PasswordField confP = new PasswordField("Confirmer le mot de passe");
+        oldP.setWidthFull(); newP.setWidthFull(); confP.setWidthFull();
 
-        PasswordField oldPasswordField = new PasswordField("Mot de passe actuel");
-        oldPasswordField.setWidthFull();
+        Button changeBtn = new Button("Mettre à jour le mot de passe");
+        changeBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        changeBtn.getStyle().set("background-color", BRAND_BLUE).set("margin-top", "20px");
+        changeBtn.setWidthFull();
+        changeBtn.addClickListener(e -> handleChangePassword(oldP, newP, confP));
 
-        PasswordField newPasswordField = new PasswordField("Nouveau mot de passe");
-        newPasswordField.setWidthFull();
-        newPasswordField.setHelperText("Minimum 8 caractères");
-
-        PasswordField confirmPasswordField = new PasswordField("Confirmer le mot de passe");
-        confirmPasswordField.setWidthFull();
-
-        Button changePasswordBtn = new Button("Changer le mot de passe", VaadinIcon.KEY.create());
-        changePasswordBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        changePasswordBtn.addClickListener(e ->
-                handleChangePassword(oldPasswordField, newPasswordField, confirmPasswordField)
-        );
-
-        card.add(cardTitle, oldPasswordField, newPasswordField, confirmPasswordField, changePasswordBtn);
-        add(card);
+        card.add(oldP, newP, confP, changeBtn);
+        parent.add(parent.getElement().getChildCount() > 0 ? card : card); // Layout helper
+        parent.add(card);
     }
 
-    /**
-     * Créer les statistiques
-     */
-    private void createStatistics() {
-        VerticalLayout card = createCard();
+    private void createDangerZone(VerticalLayout container) {
+        VerticalLayout card = createStyledCard();
+        card.getStyle()
+                .set("border", "1px solid #ffcccb")
+                .set("background-color", "#fff5f5")
+                .set("margin-top", "40px");
 
-        H2 cardTitle = new H2("📊 Mes statistiques");
-        cardTitle.getStyle().set("margin-top", "0");
+        card.add(createSectionHeader("danger.svg", "Zone de danger"));
 
-        UserStatisticsDTO stats = userService.getUserStatistics(currentUser.getId());
+        Span warning = new Span("La désactivation est définitive. Vous perdrez l'accès à vos billets et à l'historique.");
+        warning.getStyle().set("color", "#c53030").set("font-weight", "500");
 
-        HorizontalLayout statsLayout = new HorizontalLayout();
-        statsLayout.setWidthFull();
-        statsLayout.setSpacing(true);
-        statsLayout.getStyle().set("flex-wrap", "wrap");
-
-        statsLayout.add(
-                createStatItem("Réservations", String.valueOf(stats.getReservationsCount()), "#3b82f6"),
-                createStatItem("Événements créés", String.valueOf(stats.getEventsCreated()), "#8b5cf6"),
-                createStatItem("Dépensé", stats.getTotalSpent() + " DH", "#10b981")
-        );
-
-        card.add(cardTitle, statsLayout);
-        add(card);
-    }
-
-    /**
-     * Créer un item de statistique
-     */
-    private VerticalLayout createStatItem(String label, String value, String color) {
-        VerticalLayout item = new VerticalLayout();
-        item.setPadding(true);
-        item.setSpacing(false);
-        item.getStyle()
-                .set("background", "#f9fafb")
-                .set("border-radius", "8px")
-                .set("min-width", "150px");
-
-        Span valueSpan = new Span(value);
-        valueSpan.getStyle()
-                .set("font-size", "2em")
-                .set("font-weight", "bold")
-                .set("color", color);
-
-        Span labelSpan = new Span(label);
-        labelSpan.getStyle().set("color", "#666");
-
-        item.add(valueSpan, labelSpan);
-        return item;
-    }
-
-    /**
-     * Créer la zone dangereuse
-     */
-    private void createDangerZone() {
-        VerticalLayout card = createCard();
-        card.getStyle().set("border", "2px solid #ef4444");
-
-        H2 cardTitle = new H2("⚠️ Zone dangereuse");
-        cardTitle.getStyle().set("margin-top", "0").set("color", "#ef4444");
-
-        Span warning = new Span("La désactivation de votre compte entraînera la perte d'accès à toutes vos réservations.");
-        warning.getStyle().set("color", "#666");
-
-        Button deactivateBtn = new Button("Désactiver mon compte", VaadinIcon.BAN.create());
+        Button deactivateBtn = new Button("Désactiver mon compte");
         deactivateBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deactivateBtn.getStyle().set("margin-top", "15px");
         deactivateBtn.addClickListener(e -> confirmDeactivation());
 
-        card.add(cardTitle, warning, deactivateBtn);
-        add(card);
+        card.add(warning, deactivateBtn);
+        container.add(card);
     }
 
-    /**
-     * Créer une card
-     */
-    private VerticalLayout createCard() {
+    // --- HELPERS STYLE 100% JAVA ---
+
+    private HorizontalLayout createSectionHeader(String svgName, String title) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setAlignItems(Alignment.CENTER);
+        layout.getStyle().set("margin-bottom", "20px");
+
+        Image icon = new Image(ICON_PATH + svgName, "");
+        icon.setWidth("24px");
+
+        H2 h2 = new H2(title);
+        h2.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("margin", "0")
+                .set("font-weight", "800")
+                .set("font-size", "1.3em");
+
+        layout.add(icon, h2);
+        return layout;
+    }
+
+    private VerticalLayout createStyledCard() {
         VerticalLayout card = new VerticalLayout();
         card.setPadding(true);
-        card.setSpacing(true);
         card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "10px")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)")
-                .set("margin-top", "1.5em");
+                .set("background-color", "white")
+                .set("border-radius", "25px")
+                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.06)")
+                .set("padding", "40px");
         return card;
     }
 
-    /**
-     * Gérer la sauvegarde du profil
-     */
     private void handleSaveProfile() {
-        String nom = nomField.getValue();
-        String prenom = prenomField.getValue();
-        String telephone = telephoneField.getValue();
-
-        if (nom.trim().isEmpty() || prenom.trim().isEmpty()) {
-            showError("Le nom et le prénom sont obligatoires");
-            return;
-        }
-
         try {
-            userService.updateProfile(currentUser.getId(), nom, prenom, telephone);
-
-            // Mettre à jour l'utilisateur en session
-            currentUser.setNom(nom);
-            currentUser.setPrenom(prenom);
-            currentUser.setTelephone(telephone);
+            userService.updateProfile(currentUser.getId(), nomField.getValue(), prenomField.getValue(), telephoneField.getValue());
+            currentUser.setNom(nomField.getValue());
+            currentUser.setPrenom(prenomField.getValue());
             VaadinSession.setCurrentUser(currentUser);
-
-            showSuccess("Profil mis à jour avec succès");
-
+            Notification.show("Profil mis à jour", 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            UI.getCurrent().getPage().reload();
         } catch (Exception e) {
-            showError("Erreur lors de la mise à jour : " + e.getMessage());
+            Notification.show("Erreur : " + e.getMessage(), 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
-    /**
-     * Gérer le changement de mot de passe
-     */
-    private void handleChangePassword(PasswordField oldField, PasswordField newField, PasswordField confirmField) {
-        String oldPassword = oldField.getValue();
-        String newPassword = newField.getValue();
-        String confirmPassword = confirmField.getValue();
-
-        if (oldPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
-            showError("Tous les champs sont obligatoires");
+    private void handleChangePassword(PasswordField oldF, PasswordField newF, PasswordField confF) {
+        if (!newF.getValue().equals(confF.getValue())) {
+            Notification.show("Les mots de passe ne correspondent pas", 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
-
-        if (!newPassword.equals(confirmPassword)) {
-            showError("Les mots de passe ne correspondent pas");
-            return;
-        }
-
-        if (newPassword.length() < 8) {
-            showError("Le mot de passe doit contenir au moins 8 caractères");
-            return;
-        }
-
         try {
-            userService.changePassword(currentUser.getId(), oldPassword, newPassword);
-
-            showSuccess("Mot de passe changé avec succès");
-
-            oldField.clear();
-            newField.clear();
-            confirmField.clear();
-
-        } catch (IllegalArgumentException e) {
-            showError(e.getMessage());
+            userService.changePassword(currentUser.getId(), oldF.getValue(), newF.getValue());
+            Notification.show("Mot de passe modifié", 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            oldF.clear(); newF.clear(); confF.clear();
+        } catch (Exception e) {
+            Notification.show(e.getMessage(), 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
-    /**
-     * Confirmer la désactivation
-     */
     private void confirmDeactivation() {
-        ConfirmDialog dialog = new ConfirmDialog();
-        dialog.setHeader("⚠️ Désactiver le compte ?");
-        dialog.setText("Êtes-vous sûr de vouloir désactiver votre compte ? Cette action peut être annulée ultérieurement par un administrateur.");
-
-        dialog.setCancelable(true);
-        dialog.setCancelText("Annuler");
-
-        dialog.setConfirmText("Oui, désactiver");
+        ConfirmDialog dialog = new ConfirmDialog("Confirmation", "Voulez-vous désactiver votre compte ?", "Désactiver", e -> handleDeactivation(), "Annuler", e -> {});
         dialog.setConfirmButtonTheme("error primary");
-
-        dialog.addConfirmListener(e -> handleDeactivation());
-
         dialog.open();
     }
 
-    /**
-     * Gérer la désactivation
-     */
     private void handleDeactivation() {
         try {
             userService.toggleUserActive(currentUser.getId(), false);
-
-            showSuccess("Compte désactivé. Vous allez être déconnecté.");
-
-            // Déconnexion après 2 secondes
-            getUI().ifPresent(ui -> ui.access(() -> {
-                try {
-                    Thread.sleep(2000);
-                    VaadinSession.logout();
-                    NavigationManager.goToLogin();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }));
-
+            VaadinSession.logout();
+            UI.getCurrent().navigate("");
         } catch (Exception e) {
-            showError("Erreur lors de la désactivation : " + e.getMessage());
+            Notification.show(e.getMessage());
         }
-    }
-
-    /**
-     * Afficher un message de succès
-     */
-    private void showSuccess(String message) {
-        Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
-        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-    }
-
-    /**
-     * Afficher un message d'erreur
-     */
-    private void showError(String message) {
-        Notification notification = Notification.show(message, 4000, Notification.Position.TOP_CENTER);
-        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

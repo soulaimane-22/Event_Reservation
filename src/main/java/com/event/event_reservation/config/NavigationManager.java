@@ -1,5 +1,6 @@
 package com.event.event_reservation.config;
 
+import com.event.event_reservation.view.client.ReservationFormView;
 import com.vaadin.flow.component.UI;
 import com.event.event_reservation.entity.enums.UserRole;
 
@@ -74,9 +75,8 @@ public class NavigationManager {
      * @param eventId ID de l'événement à réserver
      */
     public static void goToReservationForm(Long eventId) {
-        UI.getCurrent().navigate("event/" + eventId + "/reserve");
+        UI.getCurrent().navigate(ReservationFormView.class, eventId);
     }
-
     // ========== PAGES ORGANIZER ==========
 
     /**
