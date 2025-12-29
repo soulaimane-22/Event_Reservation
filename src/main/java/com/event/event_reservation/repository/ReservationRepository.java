@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
+    // --- AJOUT DE LA MÉTHODE MANQUANTE ---
+    List<Reservation> findByEvenementId(Long evenementId);
+
     // 1. Trouver les réservations d'un utilisateur
     List<Reservation> findByUtilisateurId(Long utilisateurId);
 

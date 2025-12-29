@@ -1,15 +1,16 @@
 package com.event.event_reservation.view.organizer;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.event.event_reservation.config.NavigationManager;
@@ -26,148 +27,147 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Dashboard ORGANISATEUR
- * URL: /organizer/dashboard
- */
 @Route(value = "organizer/dashboard", layout = VaadinAppLayout.class)
 @PageTitle("Dashboard Organisateur - Event Reservation")
-public class OrganizerDashboardView extends VerticalLayout {
+public class OrganizerDashboardView extends VerticalLayout implements BeforeEnterObserver {
 
     private final EventService eventService;
     private final EventRepository eventRepository;
+    private final String BRAND_BLUE = "#253366";
+    private final String ICON_PATH = "images/events/icons/";
 
     private User currentUser;
+    private final VerticalLayout container = new VerticalLayout();
 
     @Autowired
     public OrganizerDashboardView(EventService eventService, EventRepository eventRepository) {
         this.eventService = eventService;
         this.eventRepository = eventRepository;
 
-        currentUser = VaadinSession.getCurrentUser();
-        if (currentUser == null ||
-                (currentUser.getRole() != UserRole.ORGANIZER && currentUser.getRole() != UserRole.ADMIN)) {
-            NavigationManager.goToLogin();
+        setSizeFull();
+        setPadding(false);
+        setSpacing(false);
+        getStyle().set("background-color", "#f8f9fa");
+
+        container.setWidthFull();
+        container.setMaxWidth("1250px");
+        container.getStyle().set("margin", "0 auto");
+        container.setPadding(true);
+        add(container);
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        this.currentUser = VaadinSession.getCurrentUser();
+        if (currentUser == null || (currentUser.getRole() != UserRole.ORGANIZER && currentUser.getRole() != UserRole.ADMIN)) {
+            event.forwardTo("login");
             return;
         }
-
-        setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-
+        container.removeAll();
         createHeader();
         createStatisticsCards();
-        createRecentEvents();
-        createQuickActions();
+        createRecentEventsTable();
     }
 
-    /**
-     * Créer le header
-     */
     private void createHeader() {
-        H1 title = new H1("🎭 Dashboard Organisateur");
-        title.getStyle().set("margin-bottom", "0");
+        HorizontalLayout headerRow = new HorizontalLayout();
+        headerRow.setWidthFull();
+        headerRow.setAlignItems(Alignment.CENTER);
+        headerRow.getStyle().set("margin", "30px 0");
 
-        Span subtitle = new Span("Bienvenue, " + currentUser.getPrenom() + " " + currentUser.getNom());
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        Image dashIcon = new Image(ICON_PATH + "dashboard.svg", "");
+        dashIcon.setWidth("50px");
 
-        add(title, subtitle);
+        VerticalLayout titles = new VerticalLayout();
+        titles.setPadding(false); titles.setSpacing(false);
+
+        H1 title = new H1("Tableau de bord");
+        title.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin", "0").set("font-size", "2.5em");
+
+        Span welcome = new Span("Gestion de votre activité organisateur");
+        welcome.getStyle().set("color", "#666").set("font-size", "1.1em");
+
+        titles.add(title, welcome);
+        headerRow.add(dashIcon, titles);
+        container.add(headerRow);
     }
 
-    /**
-     * Créer les cartes de statistiques
-     */
     private void createStatisticsCards() {
         EventOrganizerStatisticsDTO stats = eventService.getOrganizerStatistics(currentUser.getId());
 
-        HorizontalLayout cards = new HorizontalLayout();
-        cards.setWidthFull();
-        cards.setSpacing(true);
-        cards.getStyle().set("flex-wrap", "wrap");
+        Div grid = new Div();
+        grid.setWidthFull();
+        grid.getStyle()
+                .set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fit, minmax(240px, 1fr))")
+                .set("gap", "20px")
+                .set("margin-bottom", "40px");
 
-        // Carte 1: Total événements
-        Div totalEventsCard = createStatCard(
-                VaadinIcon.CALENDAR,
-                "Total Événements",
-                String.valueOf(stats.getTotalEvents()),
-                "#3b82f6"
+        grid.add(
+                createStatCard("statistics.svg", "Total Événements", String.valueOf(stats.getTotalEvents())),
+                createStatCard("statistics.svg", "Événements Publiés", String.valueOf(stats.getPublishedEvents())),
+                createStatCard("statistics.svg", "Réservations Totales", String.valueOf(stats.getTotalReservations())),
+                createStatCard("statistics.svg", "Chiffre d'Affaires", stats.getTotalRevenue() + " MAD")
         );
 
-        // Carte 2: Événements publiés
-        Div publishedCard = createStatCard(
-                VaadinIcon.CHECK_CIRCLE,
-                "Événements Publiés",
-                String.valueOf(stats.getPublishedEvents()),
-                "#10b981"
-        );
-
-        // Carte 3: Total réservations
-        Div reservationsCard = createStatCard(
-                VaadinIcon.TICKET,
-                "Total Réservations",
-                String.valueOf(stats.getTotalReservations()),
-                "#8b5cf6"
-        );
-
-        // Carte 4: Revenu total
-        Div revenueCard = createStatCard(
-                VaadinIcon.DOLLAR,
-                "Revenu Total",
-                stats.getTotalRevenue() + " DH",
-                "#f59e0b"
-        );
-
-        cards.add(totalEventsCard, publishedCard, reservationsCard, revenueCard);
-        add(cards);
+        container.add(grid);
     }
 
     /**
-     * Créer une carte de statistique
+     * CARTE MINIMISÉE : Fond Blanc, Border-Top Bleu, Contenu Bleu
      */
-    private Div createStatCard(VaadinIcon icon, String label, String value, String color) {
-        Div card = new Div();
-        card.setWidth("280px");
+    private VerticalLayout createStatCard(String iconName, String label, String value) {
+        VerticalLayout card = new VerticalLayout();
+        card.setAlignItems(Alignment.CENTER);
+        card.setJustifyContentMode(JustifyContentMode.CENTER);
+        card.setWidth("260px"); // Taille minimisée
+
         card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "10px")
-                .set("padding", "1.5em")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)")
-                .set("border-left", "4px solid " + color);
+                .set("background-color", "white")
+                .set("border-radius", "15px")
+                .set("border-top", "6px solid " + BRAND_BLUE) // Bordure demandée
+                .set("padding", "25px 20px")
+                .set("box-shadow", "0 8px 25px rgba(0,0,0,0.04)")
+                .set("transition", "transform 0.3s ease");
 
-        // Icône
-        icon.create().setSize("32px");
-        icon.create().setColor(color);
+        Image icon = new Image(ICON_PATH + iconName, "");
+        icon.setHeight("28px");
+        // Pas d'invert ici car on veut la couleur d'origine ou une couleur sombre
 
-        // Label
-        Span labelSpan = new Span(label);
-        labelSpan.getStyle()
-                .set("color", "#666")
-                .set("font-size", "0.9em")
-                .set("display", "block")
-                .set("margin-top", "0.5em");
+        Span val = new Span(value);
+        val.getStyle()
+                .set("font-size", "1.8em")
+                .set("font-weight", "800")
+                .set("color", BRAND_BLUE)
+                .set("margin-top", "10px");
 
-        // Valeur
-        Span valueSpan = new Span(value);
-        valueSpan.getStyle()
-                .set("color", "#333")
-                .set("font-size", "2em")
-                .set("font-weight", "bold")
-                .set("display", "block");
+        Span lbl = new Span(label);
+        lbl.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("opacity", "0.7")
+                .set("text-transform", "uppercase")
+                .set("font-size", "0.75em")
+                .set("font-weight", "700")
+                .set("letter-spacing", "0.5px");
 
-        VerticalLayout content = new VerticalLayout(icon.create(), labelSpan, valueSpan);
-        content.setPadding(false);
-        content.setSpacing(false);
+        card.add(icon, val, lbl);
 
-        card.add(content);
+        card.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-5px)'; };" +
+                "this.onmouseout = () => { this.style.transform = 'translateY(0)'; };");
+
         return card;
     }
 
-    /**
-     * Créer la section événements récents
-     */
-    private void createRecentEvents() {
-        H2 sectionTitle = new H2("📋 Mes Événements Récents");
-        sectionTitle.getStyle().set("margin-top", "2em");
+    private void createRecentEventsTable() {
+        VerticalLayout section = new VerticalLayout();
+        section.getStyle()
+                .set("background-color", "white")
+                .set("border-radius", "20px")
+                .set("box-shadow", "0 10px 40px rgba(0,0,0,0.03)")
+                .set("padding", "35px");
+
+        H2 title = new H2("Événements récents");
+        title.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin-bottom", "25px");
 
         List<Event> recentEvents = eventRepository.findByOrganisateurId(currentUser.getId())
                 .stream()
@@ -175,55 +175,35 @@ public class OrganizerDashboardView extends VerticalLayout {
                 .toList();
 
         if (recentEvents.isEmpty()) {
-            Span emptyMessage = new Span("Vous n'avez pas encore créé d'événements");
-            emptyMessage.getStyle().set("color", "var(--lumo-secondary-text-color)");
-            add(sectionTitle, emptyMessage);
-            return;
+            section.add(new Span("Aucun événement à afficher."));
+        } else {
+            Grid<Event> grid = new Grid<>(Event.class, false);
+            grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
+
+            grid.addColumn(Event::getTitre).setHeader("ÉVÉNEMENT").setSortable(true).setFlexGrow(1);
+            grid.addColumn(e -> e.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).setHeader("DATE").setAutoWidth(true);
+            grid.addComponentColumn(this::createStatusBadge).setHeader("STATUT").setAutoWidth(true);
+            grid.addComponentColumn(this::createPlacesIndicator).setHeader("REMPLISSAGE").setAutoWidth(true);
+
+            grid.addComponentColumn(event -> {
+                Button viewBtn = new Button("Gérer");
+                viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+                viewBtn.getStyle().set("color", BRAND_BLUE).set("font-weight", "700").set("cursor", "pointer");
+                viewBtn.addClickListener(e -> NavigationManager.goToMyEvents());
+                return viewBtn;
+            }).setHeader("ACTION").setAutoWidth(true);
+
+            grid.setItems(recentEvents);
+            grid.setAllRowsVisible(true);
+            section.add(grid);
         }
-
-        Grid<Event> grid = new Grid<>(Event.class, false);
-        grid.setHeight("300px");
-
-        // Colonne Titre
-        grid.addColumn(Event::getTitre)
-                .setHeader("Événement")
-                .setAutoWidth(true)
-                .setFlexGrow(1);
-
-        // Colonne Date
-        grid.addColumn(e -> e.getDateDebut().format(
-                DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        )).setHeader("Date").setAutoWidth(true);
-
-        // Colonne Statut
-        grid.addComponentColumn(this::createStatusBadge)
-                .setHeader("Statut")
-                .setAutoWidth(true);
-
-        // Colonne Places
-        grid.addComponentColumn(this::createPlacesIndicator)
-                .setHeader("Places")
-                .setAutoWidth(true);
-
-        // Colonne Actions
-        grid.addComponentColumn(event -> {
-            Button viewBtn = new Button("Voir", VaadinIcon.EYE.create());
-            viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-            viewBtn.addClickListener(e -> NavigationManager.goToEventDetail(event.getId()));
-            return viewBtn;
-        }).setHeader("Action").setAutoWidth(true);
-
-        grid.setItems(recentEvents);
-
-        add(sectionTitle, grid);
+        container.add(title, section);
     }
 
-    /**
-     * Créer le badge de statut
-     */
     private Span createStatusBadge(Event event) {
         Span badge = new Span(event.getStatut().toString());
-        badge.getElement().getThemeList().add("badge");
+        var s = badge.getStyle();
+        s.set("padding", "4px 10px").set("border-radius", "15px").set("font-size", "0.7em").set("font-weight", "bold").set("color", "white");
 
         String color = switch (event.getStatut()) {
             case PUBLIE -> "#10b981";
@@ -231,59 +211,18 @@ public class OrganizerDashboardView extends VerticalLayout {
             case ANNULE -> "#ef4444";
             case TERMINE -> "#3b82f6";
         };
-
-        badge.getStyle()
-                .set("background", color)
-                .set("color", "white")
-                .set("padding", "4px 8px")
-                .set("border-radius", "4px")
-                .set("font-size", "0.85em");
-
+        s.set("background-color", color);
         return badge;
     }
 
-    /**
-     * Créer l'indicateur de places
-     */
     private Span createPlacesIndicator(Event event) {
         int reserved = event.getCapaciteMax() - event.getCapaciteRestante();
-        Span places = new Span(reserved + " / " + event.getCapaciteMax());
-
-        double fillRate = (double) reserved / event.getCapaciteMax();
-
-        if (fillRate >= 0.9) {
-            places.getStyle().set("color", "#10b981"); // Vert (presque plein)
-        } else if (fillRate >= 0.5) {
-            places.getStyle().set("color", "#f59e0b"); // Orange (moitié)
-        } else {
-            places.getStyle().set("color", "#6b7280"); // Gris (peu rempli)
-        }
-
-        return places;
-    }
-
-    /**
-     * Créer les actions rapides
-     */
-    private void createQuickActions() {
-        H2 actionsTitle = new H2("🚀 Actions Rapides");
-        actionsTitle.getStyle().set("margin-top", "2em");
-
-        HorizontalLayout actions = new HorizontalLayout();
-        actions.setSpacing(true);
-        actions.getStyle().set("flex-wrap", "wrap");
-
-        // Bouton: Créer un événement
-        Button createBtn = new Button("Créer un événement", VaadinIcon.PLUS_CIRCLE.create());
-        createBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        createBtn.addClickListener(e -> NavigationManager.goToCreateEvent());
-
-        // Bouton: Voir tous mes événements
-        Button allEventsBtn = new Button("Mes événements", VaadinIcon.LIST.create());
-        allEventsBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_LARGE);
-        allEventsBtn.addClickListener(e -> NavigationManager.goToMyEvents());
-
-        actions.add(createBtn, allEventsBtn);
-        add(actionsTitle, actions);
+        double rate = (double) reserved / event.getCapaciteMax();
+        Span span = new Span(reserved + " / " + event.getCapaciteMax());
+        span.getStyle().set("font-weight", "600").set("font-size", "0.85em");
+        if (rate >= 0.8) span.getStyle().set("color", "#ef4444");
+        else if (rate >= 0.5) span.getStyle().set("color", "#f59e0b");
+        else span.getStyle().set("color", "#10b981");
+        return span;
     }
 }

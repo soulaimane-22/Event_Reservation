@@ -16,8 +16,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
-import com.event.event_reservation.dto.UserStatisticsDTO;
 import com.event.event_reservation.entity.User;
+import com.event.event_reservation.entity.enums.UserRole;
 import com.event.event_reservation.service.UserService;
 import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +58,7 @@ public class ProfileView extends VerticalLayout {
         content.setSpacing(true);
 
         createHeader(content);
-        createStatsSection(content);
+        // La section Statistiques a été supprimée d'ici
 
         // Grille pour les formulaires
         Div formsGrid = new Div();
@@ -84,8 +84,10 @@ public class ProfileView extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
         header.getStyle().set("margin", "30px 0");
 
-        Image clientIcon = new Image(ICON_PATH + "client.svg", "");
-        clientIcon.setWidth("60px");
+        // --- LOGIQUE ICÔNE DYNAMIQUE SELON RÔLE ---
+        String iconFile = (currentUser.getRole() == UserRole.ORGANIZER) ? "organizer.svg" : "client.svg";
+        Image profileIcon = new Image(ICON_PATH + iconFile, "Profil");
+        profileIcon.setWidth("60px");
 
         VerticalLayout textLayout = new VerticalLayout();
         textLayout.setPadding(false);
@@ -102,60 +104,8 @@ public class ProfileView extends VerticalLayout {
         subtitle.getStyle().set("color", "#666").set("font-size", "1.1em");
 
         textLayout.add(title, subtitle);
-        header.add(clientIcon, textLayout);
+        header.add(profileIcon, textLayout);
         container.add(header);
-    }
-
-    private void createStatsSection(VerticalLayout container) {
-        UserStatisticsDTO stats = userService.getUserStatistics(currentUser.getId());
-
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(false);
-
-        HorizontalLayout titleRow = createSectionHeader("statistics.svg", "Mes Statistiques");
-
-        Div statsGrid = new Div();
-        statsGrid.setWidthFull();
-        statsGrid.getStyle()
-                .set("display", "grid")
-                .set("grid-template-columns", "repeat(auto-fit, minmax(250px, 1fr))")
-                .set("gap", "20px");
-
-        statsGrid.add(
-                createStatCard("Réservations", String.valueOf(stats.getReservationsCount()), "#3b82f6"),
-                createStatCard("Événements", String.valueOf(stats.getEventsCreated()), "#8b5cf6"),
-                createStatCard("Total Dépensé", stats.getTotalSpent() + " DH", "#10b981")
-        );
-
-        section.add(titleRow, statsGrid);
-        container.add(section);
-    }
-
-    private VerticalLayout createStatCard(String label, String value, String color) {
-        VerticalLayout card = new VerticalLayout();
-        card.setAlignItems(Alignment.CENTER);
-        card.getStyle()
-                .set("background-color", "white")
-                .set("border-radius", "20px")
-                .set("box-shadow", "0 10px 25px rgba(0,0,0,0.05)")
-                .set("padding", "30px");
-
-        Span val = new Span(value);
-        val.getStyle()
-                .set("font-size", "2.2em")
-                .set("font-weight", "800")
-                .set("color", color);
-
-        Span lbl = new Span(label);
-        lbl.getStyle()
-                .set("color", "#888")
-                .set("text-transform", "uppercase")
-                .set("font-weight", "600")
-                .set("font-size", "0.85em")
-                .set("letter-spacing", "1px");
-
-        card.add(val, lbl);
-        return card;
     }
 
     private void createProfileForm(Div parent) {
@@ -205,7 +155,6 @@ public class ProfileView extends VerticalLayout {
         changeBtn.addClickListener(e -> handleChangePassword(oldP, newP, confP));
 
         card.add(oldP, newP, confP, changeBtn);
-        parent.add(parent.getElement().getChildCount() > 0 ? card : card); // Layout helper
         parent.add(card);
     }
 
