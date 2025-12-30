@@ -1,283 +1,91 @@
 -- ============================================
--- 📄 data.sql - UTILISATEURS ET ÉVÉNEMENTS
+-- 📄 data.sql - INITIALISATION COMPLÈTE
 -- 📁 Chemin: src/main/resources/data.sql
 -- ============================================
 
--- ========== UTILISATEURS ==========
+-- ========== 1. UTILISATEURS (Total: 7) ==========
+-- Mots de passe : admin123, org12345, client123
 
--- 1. ADMIN (admin@event.ma / admin123)
-INSERT INTO users (nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
-VALUES ('Admin', 'System', 'admin@event.ma', '$2a$10$N9qo8uLOickgx2Z6.HvGCeYRXvHhBWrXw/5VBhqXyZ5Xn0vhHpYPS', 'ADMIN', CURRENT_TIMESTAMP, true, '0600000001', 'LIGHT');
+-- ADMIN (ID: 1)
+INSERT INTO users (id, nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
+VALUES (1, 'Admin', 'System', 'admin@event.ma', '$2a$10$nh/ydhEx0J9QOw1LL8.Ge.qD0WVhQYT6KqgjWACkvBdJfab5t06p.', 'ADMIN', CURRENT_TIMESTAMP, true, '0600000001', 'LIGHT');
 
--- 2. ORGANIZER 1 (organizer1@event.ma / org123)
-INSERT INTO users (nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
-VALUES ('Alami', 'Youssef', 'organizer1@event.ma', '$2a$10$N9qo8uLOickgx2Z6.HvGCeYRXvHhBWrXw/5VBhqXyZ5Xn0vhHpYPS', 'ORGANIZER', CURRENT_TIMESTAMP, true, '0600000002', 'LIGHT');
+-- ORGANISATEURS (IDs: 2, 3, 9)
+INSERT INTO users (id, nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference) VALUES
+                                                                                                                     (2, 'Alami', 'Youssef', 'organizer1@event.ma', '$2a$10$88s85dmiQq5ehUTSoxBtBefJ1s/8JlqGAHRnAjHSnxhIc.p3Dbtki', 'ORGANIZER', CURRENT_TIMESTAMP, true, '0600000002', 'LIGHT'),
+                                                                                                                     (3, 'Bennani', 'Fatima', 'organizer2@event.ma', '$2a$10$88s85dmiQq5ehUTSoxBtBefJ1s/8JlqGAHRnAjHSnxhIc.p3Dbtki', 'ORGANIZER', CURRENT_TIMESTAMP, true, '0600000003', 'LIGHT'),
+                                                                                                                     (9, 'Soulaimane', 'Benayad', 'organizer3@event.ma', '$2a$10$88s85dmiQq5ehUTSoxBtBefJ1s/8JlqGAHRnAjHSnxhIc.p3Dbtki', 'ORGANIZER', CURRENT_TIMESTAMP, true, '0600000009', 'LIGHT');
 
--- 3. ORGANIZER 2 (organizer2@event.ma / org123)
-INSERT INTO users (nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
-VALUES ('Bennani', 'Fatima', 'organizer2@event.ma', '$2a$10$N9qo8uLOickgx2Z6.HvGCeYRXvHhBWrXw/5VBhqXyZ5Xn0vhHpYPS', 'ORGANIZER', CURRENT_TIMESTAMP, true, '0600000003', 'LIGHT');
-
--- 4. CLIENT 1 (client1@event.ma / client123)
-INSERT INTO users (nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
-VALUES ('El Fassi', 'Ahmed', 'client1@event.ma', '$2a$10$N9qo8uLOickgx2Z6.HvGCeYRXvHhBWrXw/5VBhqXyZ5Xn0vhHpYPS', 'CLIENT', CURRENT_TIMESTAMP, true, '0600000004', 'LIGHT');
-
--- 5. CLIENT 2 (client2@event.ma / client123)
-INSERT INTO users (nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference)
-VALUES ('Idrissi', 'Nadia', 'client2@event.ma', '$2a$10$N9qo8uLOickgx2Z6.HvGCeYRXvHhBWrXw/5VBhqXyZ5Xn0vhHpYPS', 'CLIENT', CURRENT_TIMESTAMP, true, '0600000005', 'LIGHT');
+-- CLIENTS (IDs: 4, 5, 6)
+INSERT INTO users (id, nom, prenom, email, password, role, date_inscription, actif, telephone, theme_preference) VALUES
+                                                                                                                     (4, 'El Fassi', 'Ahmed', 'client1@event.ma', '$2a$10$.znZqOkRvvehaQvlhUmPFuvOxaDIOW18L2pdD2z6y0vlY3FX1Xcue', 'CLIENT', CURRENT_TIMESTAMP, true, '0600000004', 'LIGHT'),
+                                                                                                                     (5, 'Idrissi', 'Nadia', 'client2@event.ma', '$2a$10$.znZqOkRvvehaQvlhUmPFuvOxaDIOW18L2pdD2z6y0vlY3FX1Xcue', 'CLIENT', CURRENT_TIMESTAMP, true, '0600000005', 'LIGHT'),
+                                                                                                                     (6, 'Elalaoui', 'Hassan', 'client3@event.ma', '$2a$10$.znZqOkRvvehaQvlhUmPFuvOxaDIOW18L2pdD2z6y0vlY3FX1Xcue', 'CLIENT', CURRENT_TIMESTAMP, true, '0600000006', 'LIGHT');
 
 
--- ========== ÉVÉNEMENTS ==========
+-- ========== 2. ÉVÉNEMENTS (Total: 20) ==========
 
--- Organisateur 1: Youssef Alami (ID sera 2) - 5 événements
+-- Organisateur 1 (ID 2)
+INSERT INTO events (id, titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation) VALUES
+                                                                                                                                                                                                                      (1, 'Summer Music Festival', 'Grand festival de musique estival avec artistes nationaux.', 'CONCERT', DATEADD('DAY', 15, CURRENT_TIMESTAMP), DATEADD('DAY', 16, CURRENT_TIMESTAMP), 'Plage Ain Diab', 'Casablanca', 33.5731, -7.5898, 500, 480, 250.00, 'images/events/music.jpg', 2, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (2, 'Classic Drama Hamlet', 'Une adaptation moderne de la pièce de Shakespeare.', 'THEATRE', DATEADD('DAY', 10, CURRENT_TIMESTAMP), DATEADD('DAY', 10, CURRENT_TIMESTAMP), 'Théâtre Mohammed V', 'Rabat', 34.0144, -6.8326, 200, 180, 150.00, 'images/events/theatre.jpg', 2, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (3, 'Digital Trends 2025', 'Conférence sur le futur du digital au Maroc.', 'CONFERENCE', DATEADD('DAY', 30, CURRENT_TIMESTAMP), DATEADD('DAY', 30, CURRENT_TIMESTAMP), 'Technopark', 'Casablanca', 33.5731, -7.5898, 150, 150, 300.00, 'images/events/tech.jpg', 2, 'BROUILLON', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (4, 'Tennis Open Tanger', 'Tournoi de tennis amateur inter-villes.', 'SPORT', DATEADD('DAY', -5, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP), 'Club Municipal', 'Tanger', 35.7595, -5.8340, 100, 0, 80.00, 'images/events/sport.jpg', 2, 'TERMINE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (5, 'Art et Culture Fès', 'Exposition de tableaux d artistes locaux.', 'AUTRE', DATEADD('DAY', 20, CURRENT_TIMESTAMP), DATEADD('DAY', 25, CURRENT_TIMESTAMP), 'Palais Medina', 'Fès', 34.0331, -5.0003, 80, 75, 40.00, 'images/events/art.jpg', 2, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (6, 'Rabat Startup Weekend', 'Accélérateur de projets innovants.', 'CONFERENCE', DATEADD('DAY', 5, CURRENT_TIMESTAMP), DATEADD('DAY', 7, CURRENT_TIMESTAMP), 'Université UM6P', 'Rabat', 34.0144, -6.8326, 60, 58, 100.00, 'images/events/startup.jpg', 2, 'PUBLIE', CURRENT_TIMESTAMP);
 
--- 1. Summer Music Festival (Organisateur 1)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎵 Summer Music Festival',
-        'Rejoignez-nous pour le plus grand festival de musique de l''année mettant en vedette des artistes internationaux et des talents locaux. Trois jours de musique non-stop, de nourriture et de divertissement.',
-        'CONCERT',
-        DATEADD('DAY', 30, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 33, CURRENT_TIMESTAMP),
-        'Complexe Sportif Mohammed V',
-        'Casablanca',
-        33.5731,
-        -7.5898,
-        5000,
-        4850,
-        250.00,
-        '/images/events/summer-music-festival.jpg',
-        2,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
+-- Organisateur 2 (ID 3)
+INSERT INTO events (id, titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation) VALUES
+                                                                                                                                                                                                                      (7, 'Jazz Night Marrakech', 'Soirée intime sous les étoiles au coeur de la palmeraie.', 'CONCERT', DATEADD('DAY', 12, CURRENT_TIMESTAMP), DATEADD('DAY', 12, CURRENT_TIMESTAMP), 'Jardin Majorelle', 'Marrakech', 31.6295, -7.9811, 150, 140, 200.00, 'images/events/jazz.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (8, 'Marketing Summit', 'Rencontre annuelle des professionnels du marketing.', 'CONFERENCE', DATEADD('DAY', 40, CURRENT_TIMESTAMP), DATEADD('DAY', 40, CURRENT_TIMESTAMP), 'Hôtel Hyatt', 'Casablanca', 33.5731, -7.5898, 200, 200, 450.00, 'images/events/marketing.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (9, 'Championnat Judo', 'Compétition nationale de judo junior.', 'SPORT', DATEADD('DAY', 4, CURRENT_TIMESTAMP), DATEADD('DAY', 4, CURRENT_TIMESTAMP), 'Salle Couverte', 'Fès', 34.0331, -5.0003, 300, 290, 50.00, 'images/events/judo.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (10, 'Festival Gastronomique', 'Dégustation des meilleurs plats du terroir.', 'AUTRE', DATEADD('DAY', 50, CURRENT_TIMESTAMP), DATEADD('DAY', 52, CURRENT_TIMESTAMP), 'Place des Nations', 'Tanger', 35.7595, -5.8340, 500, 500, 120.00, 'images/events/food.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (11, 'Théâtre de la Ville', 'Représentation comique par la troupe locale.', 'THEATRE', DATEADD('DAY', 18, CURRENT_TIMESTAMP), DATEADD('DAY', 18, CURRENT_TIMESTAMP), 'Centre Culturel', 'Casablanca', 33.5731, -7.5898, 150, 145, 90.00, 'images/events/comedy.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (12, 'Marathon Détente', 'Course solidaire de 5km pour la santé.', 'SPORT', DATEADD('DAY', 35, CURRENT_TIMESTAMP), DATEADD('DAY', 35, CURRENT_TIMESTAMP), 'Forêt Hilton', 'Rabat', 34.0144, -6.8326, 400, 400, 50.00, 'images/events/run.jpg', 3, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (13, 'Conférence IA Maroc', 'Impact de l IA sur l économie nationale.', 'CONFERENCE', DATEADD('DAY', 70, CURRENT_TIMESTAMP), DATEADD('DAY', 70, CURRENT_TIMESTAMP), 'UM6P', 'Rabat', 34.0144, -6.8326, 250, 250, 0.00, 'images/events/ai.jpg', 3, 'BROUILLON', CURRENT_TIMESTAMP);
 
--- 2. Classic Drama: Hamlet (Organisateur 1)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎭 Classic Drama: Hamlet',
-        'Une performance à couper le souffle du chef-d''œuvre de Shakespeare par la National Theatre Company. Vivez la tragédie du prince danois.',
-        'THEATRE',
-        DATEADD('DAY', 20, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 20, CURRENT_TIMESTAMP),
-        'Théâtre Mohammed V',
-        'Rabat',
-        34.0144,
-        -6.8326,
-        600,
-        520,
-        150.00,
-        '/images/events/hamlet-theatre.jpg',
-        2,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 3. Jazz Night Under Stars (Organisateur 1)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎷 Jazz Night Under Stars',
-        'Une soirée intime de performances jazz douces sous le ciel étoilé. Mettant en vedette des musiciens de jazz renommés et des artistes émergents.',
-        'CONCERT',
-        DATEADD('DAY', 15, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 15, CURRENT_TIMESTAMP),
-        'Jardin Majorelle',
-        'Marrakech',
-        31.6295,
-        -7.9811,
-        300,
-        280,
-        200.00,
-        '/images/events/jazz-night.jpg',
-        2,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 4. Marathon International de Casablanca (Organisateur 1)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🏃 Marathon International de Casablanca',
-        'Le plus grand marathon d''Afrique du Nord avec des participants du monde entier. Parcourez les rues emblématiques de Casablanca dans une course qui allie sport et découverte culturelle.',
-        'SPORT',
-        DATEADD('DAY', 90, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 90, CURRENT_TIMESTAMP),
-        'Boulevard de la Corniche',
-        'Casablanca',
-        33.5731,
-        -7.5898,
-        10000,
-        8500,
-        150.00,
-        '/images/events/marathon-casa.jpg',
-        2,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 5. Literature Festival: Words & Stories (Organisateur 1)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('📚 Literature Festival: Words & Stories',
-        'Célébrez la littérature avec des auteurs renommés, des ateliers d''écriture et des lectures publiques. Un rendez-vous incontournable pour les amoureux des mots et des histoires.',
-        'CONFERENCE',
-        DATEADD('DAY', 50, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 53, CURRENT_TIMESTAMP),
-        'Bibliothèque Nationale du Royaume',
-        'Rabat',
-        34.0077,
-        -6.8452,
-        500,
-        450,
-        100.00,
-        '/images/events/literature-festival.jpg',
-        2,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
+-- Organisateur 3 (ID 9)
+INSERT INTO events (id, titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation) VALUES
+                                                                                                                                                                                                                      (14, 'Rock Experience', 'Concert live des groupes émergents du Boultek.', 'CONCERT', DATEADD('DAY', 22, CURRENT_TIMESTAMP), DATEADD('DAY', 22, CURRENT_TIMESTAMP), 'L abattoir', 'Casablanca', 33.5731, -7.5898, 300, 290, 100.00, 'images/events/rock.jpg', 9, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (15, 'Gala Charité Atlas', 'Dîner de bienfaisance pour les enfants du Haut Atlas.', 'AUTRE', DATEADD('DAY', 100, CURRENT_TIMESTAMP), DATEADD('DAY', 100, CURRENT_TIMESTAMP), 'La Mamounia', 'Marrakech', 31.6295, -7.9811, 200, 200, 500.00, 'images/events/gala.jpg', 9, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (16, 'Molière à Fès', 'Représentation du Malade Imaginaire.', 'THEATRE', DATEADD('DAY', -2, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP), 'Institut Français', 'Fès', 34.0331, -5.0003, 100, 0, 70.00, 'images/events/moliere.jpg', 9, 'TERMINE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (17, 'Forum Emploi Tanger', 'Connecter les talents du Nord avec les entreprises.', 'CONFERENCE', DATEADD('DAY', 45, CURRENT_TIMESTAMP), DATEADD('DAY', 46, CURRENT_TIMESTAMP), 'Mövenpick', 'Tanger', 35.7595, -5.8340, 500, 500, 0.00, 'images/events/jobs.jpg', 9, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (18, 'Match Gala Foot', 'Match amical entre anciens joueurs pros.', 'SPORT', DATEADD('DAY', 8, CURRENT_TIMESTAMP), DATEADD('DAY', 8, CURRENT_TIMESTAMP), 'Stade Père Jégo', 'Casablanca', 33.5731, -7.5898, 600, 580, 40.00, 'images/events/football.jpg', 9, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (19, 'Cours Yoga Nature', 'Session de yoga relaxante dans le jardin Majorelle.', 'AUTRE', DATEADD('DAY', 12, CURRENT_TIMESTAMP), DATEADD('DAY', 12, CURRENT_TIMESTAMP), 'Marrakech Park', 'Marrakech', 31.6295, -7.9811, 40, 35, 150.00, 'images/events/yoga.jpg', 9, 'PUBLIE', CURRENT_TIMESTAMP),
+                                                                                                                                                                                                                      (20, 'Atelier Coding Kids', 'Initiation à Scratch pour les 8-12 ans.', 'CONFERENCE', DATEADD('DAY', 15, CURRENT_TIMESTAMP), DATEADD('DAY', 15, CURRENT_TIMESTAMP), 'Espace Coworking', 'Rabat', 34.0144, -6.8326, 20, 20, 100.00, 'images/events/coding.jpg', 9, 'ANNULE', CURRENT_TIMESTAMP);
 
 
--- Organisateur 2: Fatima Bennani (ID sera 3) - 5 événements
+-- ========== 3. RÉSERVATIONS (Total: 30) ==========
+-- Clients IDs : 4, 5, 6 | Événements IDs : 1 à 20
 
--- 6. Tech Innovation Summit 2025 (Organisateur 2)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🚀 Tech Innovation Summit 2025',
-        'Explorez l''avenir de la technologie avec des leaders de l''industrie, des startups et des innovateurs. Conférences plénières, ateliers et opportunités de réseautage.',
-        'CONFERENCE',
-        DATEADD('DAY', 45, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 47, CURRENT_TIMESTAMP),
-        'Sofitel Rabat Jardin des Roses',
-        'Rabat',
-        34.0209,
-        -6.8416,
-        800,
-        750,
-        500.00,
-        '/images/events/tech-summit.jpg',
-        3,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 7. Football Championship Finals (Organisateur 2)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('⚽ Football Championship Finals',
-        'L''ultime affrontement footballistique entre les deux meilleures équipes de la saison. Vivez l''excitation et la passion du football marocain.',
-        'SPORT',
-        DATEADD('DAY', 60, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 60, CURRENT_TIMESTAMP),
-        'Stade Mohammed V',
-        'Casablanca',
-        33.5657,
-        -7.6291,
-        45000,
-        38000,
-        100.00,
-        '/images/events/football-finals.jpg',
-        3,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 8. Art Exhibition: Contemporary Masters (Organisateur 2)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎨 Art Exhibition: Contemporary Masters',
-        'Une exposition exceptionnelle mettant en vedette les œuvres de maîtres de l''art contemporain. Découvrez des peintures, sculptures et installations innovantes qui repoussent les limites de la créativité.',
-        'AUTRE',
-        DATEADD('DAY', 10, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 40, CURRENT_TIMESTAMP),
-        'Musée Mohammed VI d''Art Moderne',
-        'Rabat',
-        34.0201,
-        -6.8352,
-        200,
-        180,
-        80.00,
-        '/images/events/art-exhibition.jpg',
-        3,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 9. Stand-up Comedy Night (Organisateur 2)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎤 Stand-up Comedy Night',
-        'Une soirée hilarante avec les meilleurs humoristes marocains et internationaux. Rires garantis dans une ambiance chaleureuse et conviviale au cœur de Marrakech.',
-        'AUTRE',
-        DATEADD('DAY', 25, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 25, CURRENT_TIMESTAMP),
-        'Théâtre Royal de Marrakech',
-        'Marrakech',
-        31.6340,
-        -7.9897,
-        400,
-        350,
-        120.00,
-        '/images/events/comedy-night.jpg',
-        3,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
--- 10. Circus Spectacular: Magic & Wonder (Organisateur 2)
-INSERT INTO events (titre, description, categorie, date_debut, date_fin, lieu, ville, latitude, longitude, capacite_max, capacite_restante, prix_unitaire, image_url, organisateur_id, statut, date_creation, moyenne_notes, nombre_avis)
-VALUES ('🎪 Circus Spectacular: Magic & Wonder',
-        'Le plus grand spectacle de cirque jamais organisé au Maroc. Acrobates, jongleurs, clowns et magiciens vous transportent dans un monde de merveilles et d''émerveillement.',
-        'AUTRE',
-        DATEADD('DAY', 35, CURRENT_TIMESTAMP),
-        DATEADD('DAY', 38, CURRENT_TIMESTAMP),
-        'Complexe Al Amal',
-        'Casablanca',
-        33.5882,
-        -7.6114,
-        2000,
-        1800,
-        180.00,
-        '/images/events/circus-spectacular.jpg',
-        3,
-        'PUBLIE',
-        CURRENT_TIMESTAMP,
-        0,
-        0);
-
-
--- ========== INFORMATIONS DE CONNEXION ==========
---
--- ADMIN:
---   Email: admin@event.ma
---   Password: admin123
---
--- ORGANIZER 1 (Youssef Alami - 5 événements):
---   Email: organizer1@event.ma
---   Password: org123
---
--- ORGANIZER 2 (Fatima Bennani - 5 événements):
---   Email: organizer2@event.ma
---   Password: org123
---
--- CLIENT 1 (Ahmed El Fassi):
---   Email: client1@event.ma
---   Password: client123
---
--- CLIENT 2 (Nadia Idrissi):
---   Email: client2@event.ma
---   Password: client123
---
--- ========== RÉPARTITION DES ÉVÉNEMENTS ==========
---
--- ORGANISATEUR 1 (Youssef Alami):
---   1. 🎵 Summer Music Festival (Casablanca)
---   2. 🎭 Classic Drama: Hamlet (Rabat)
---   3. 🎷 Jazz Night Under Stars (Marrakech)
---   4. 🏃 Marathon International de Casablanca (Casablanca)
---   5. 📚 Literature Festival (Rabat)
---
--- ORGANISATEUR 2 (Fatima Bennani):
---   6. 🚀 Tech Innovation Summit 2025 (Rabat)
---   7. ⚽ Football Championship Finals (Casablanca)
---   8. 🎨 Art Exhibition (Rabat)
---   9. 🎤 Stand-up Comedy Night (Marrakech)
---   10. 🎪 Circus Spectacular (Casablanca)
+INSERT INTO reservations (CODE_RESERVATION, COMMENTAIRE, DATE_RESERVATION, EMAIL_CONFIRMATION_ENVOYE, EMAIL_RAPPEL_ENVOYE, MONTANT_TOTAL, NOMBRE_PLACES, STATUT, EVENEMENT_ID, UTILISATEUR_ID) VALUES
+                                                                                                                                                                                                   ('EVT-10001', 'Hâte de venir !', CURRENT_TIMESTAMP, TRUE, FALSE, 500.00, 2, 'CONFIRMEE', 1, 4),
+                                                                                                                                                                                                   ('EVT-10002', NULL, DATEADD('DAY', -1, CURRENT_TIMESTAMP), TRUE, FALSE, 150.00, 1, 'CONFIRMEE', 2, 4),
+                                                                                                                                                                                                   ('EVT-10003', 'Accès PMR', CURRENT_TIMESTAMP, TRUE, FALSE, 400.00, 2, 'CONFIRMEE', 7, 4),
+                                                                                                                                                                                                   ('EVT-10004', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 250.00, 1, 'CONFIRMEE', 1, 5),
+                                                                                                                                                                                                   ('EVT-10005', 'Pour mes enfants', CURRENT_TIMESTAMP, TRUE, FALSE, 300.00, 6, 'CONFIRMEE', 9, 5),
+                                                                                                                                                                                                   ('EVT-10006', 'Désolé je ne peux plus', DATEADD('DAY', -2, CURRENT_TIMESTAMP), FALSE, FALSE, 150.00, 1, 'ANNULEE', 19, 5),
+                                                                                                                                                                                                   ('EVT-10007', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 600.00, 4, 'CONFIRMEE', 2, 6),
+                                                                                                                                                                                                   ('EVT-10008', 'Super festival', CURRENT_TIMESTAMP, TRUE, FALSE, 400.00, 2, 'CONFIRMEE', 7, 6),
+                                                                                                                                                                                                   ('EVT-10009', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 200.00, 2, 'CONFIRMEE', 14, 6),
+                                                                                                                                                                                                   ('EVT-10010', 'Paiement en attente', CURRENT_TIMESTAMP, FALSE, FALSE, 450.00, 1, 'EN_ATTENTE', 8, 4),
+                                                                                                                                                                                                   ('EVT-10011', NULL, DATEADD('DAY', -1, CURRENT_TIMESTAMP), TRUE, FALSE, 200.00, 1, 'CONFIRMEE', 14, 4),
+                                                                                                                                                                                                   ('EVT-10012', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 180.00, 2, 'CONFIRMEE', 11, 4),
+                                                                                                                                                                                                   ('EVT-10013', 'Virement en cours', CURRENT_TIMESTAMP, FALSE, FALSE, 100.00, 1, 'EN_ATTENTE', 6, 5),
+                                                                                                                                                                                                   ('EVT-10014', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 300.00, 2, 'CONFIRMEE', 19, 5),
+                                                                                                                                                                                                   ('EVT-10015', 'En famille', CURRENT_TIMESTAMP, TRUE, FALSE, 360.00, 4, 'CONFIRMEE', 11, 6),
+                                                                                                                                                                                                   ('EVT-10016', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 750.00, 3, 'CONFIRMEE', 1, 4),
+                                                                                                                                                                                                   ('EVT-10017', 'Dernière minute', DATEADD('HOUR', -5, CURRENT_TIMESTAMP), TRUE, FALSE, 80.00, 2, 'CONFIRMEE', 18, 4),
+                                                                                                                                                                                                   ('EVT-10018', NULL, CURRENT_TIMESTAMP, FALSE, FALSE, 500.00, 1, 'ANNULEE', 15, 4),
+                                                                                                                                                                                                   ('EVT-10019', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 200.00, 1, 'CONFIRMEE', 7, 5),
+                                                                                                                                                                                                   ('EVT-10020', 'Confirmation rapide svp', CURRENT_TIMESTAMP, TRUE, FALSE, 400.00, 2, 'CONFIRMEE', 7, 6),
+                                                                                                                                                                                                   ('EVT-10021', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 300.00, 2, 'CONFIRMEE', 2, 5),
+                                                                                                                                                                                                   ('EVT-10022', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 100.00, 2, 'CONFIRMEE', 9, 6),
+                                                                                                                                                                                                   ('EVT-10023', 'Proche de la scène', CURRENT_TIMESTAMP, TRUE, FALSE, 150.00, 1, 'CONFIRMEE', 2, 4),
+                                                                                                                                                                                                   ('EVT-10024', NULL, DATEADD('DAY', -1, CURRENT_TIMESTAMP), TRUE, FALSE, 200.00, 4, 'CONFIRMEE', 5, 5),
+                                                                                                                                                                                                   ('EVT-10025', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 200.00, 5, 'CONFIRMEE', 18, 6),
+                                                                                                                                                                                                   ('EVT-10026', 'Test résa', CURRENT_TIMESTAMP, TRUE, FALSE, 120.00, 3, 'CONFIRMEE', 5, 4),
+                                                                                                                                                                                                   ('EVT-10027', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 250.00, 1, 'CONFIRMEE', 1, 5),
+                                                                                                                                                                                                   ('EVT-10028', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 450.00, 1, 'CONFIRMEE', 8, 6),
+                                                                                                                                                                                                   ('EVT-10029', 'En attente virement', CURRENT_TIMESTAMP, FALSE, FALSE, 100.00, 1, 'EN_ATTENTE', 6, 4),
+                                                                                                                                                                                                   ('EVT-10030', NULL, CURRENT_TIMESTAMP, TRUE, FALSE, 90.00, 1, 'CONFIRMEE', 11, 5);
