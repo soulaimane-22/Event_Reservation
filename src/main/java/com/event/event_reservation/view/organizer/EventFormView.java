@@ -24,18 +24,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.UUID;
 
 @Route(value = "organizer/event/new", layout = VaadinAppLayout.class)
 @RouteAlias(value = "organizer/event/edit", layout = VaadinAppLayout.class)
@@ -47,7 +40,6 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
     private final User currentUser;
 
     private final String BRAND_BLUE = "#253366";
-    private final String ICON_PATH = "images/events/icons/";
 
     // Composants du formulaire
     private Long eventId;
@@ -63,7 +55,6 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
     private final NumberField prix = new NumberField("Prix (MAD)");
     private final TextArea description = new TextArea("Description détaillée");
 
-    private String imagePathForDb = null;
     private final VerticalLayout container = new VerticalLayout();
 
     @Autowired
@@ -77,9 +68,8 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
             return;
         }
 
-        // INITIALISATION DES DONNÉES DU MENU DÉROULANT
+        // INITIALISATION DES DONNÉES DU MENU
         categorie.setItems(EventCategory.values());
-        categorie.setItemLabelGenerator(EventCategory::name);
 
         setSizeFull();
         setPadding(false);
@@ -131,25 +121,20 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         formLayout.setWidthFull();
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("600px", 2));
 
-        // Configuration des champs
+        // Configuration
         titre.setRequired(true);
-        titre.setWidthFull();
-        categorie.setWidthFull();
-        categorie.setPlaceholder("Choisir une catégorie");
+        prix.setSuffixComponent(new Span("MAD"));
 
+        // Ajout des champs dans la grille
         formLayout.add(titre, categorie, dateDebut, dateFin, ville, lieu, latField, lngField, capacite, prix);
         formLayout.setColspan(titre, 2);
 
-        // --- IMAGE UPLOAD SECTION ---
-        VerticalLayout uploadArea = createUploadComponent();
-
-        // --- DESCRIPTION BOX (AJUSTÉE) ---
+        // DESCRIPTION EN PLEINE LARGEUR (Hors du FormLayout pour l'alignement)
         description.setWidthFull();
         description.setMinHeight("200px");
         description.getStyle().set("margin-top", "20px");
-        description.setPlaceholder("Décrivez votre événement ici...");
 
-        card.add(formLayout, new Hr(), uploadArea, description);
+        card.add(formLayout, new Hr(), description);
 
         // 3. ACTIONS
         HorizontalLayout actions = new HorizontalLayout();
@@ -158,53 +143,16 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         actions.setSpacing(true);
         actions.getStyle().set("margin-top", "30px");
 
-        Button draftBtn = new Button("Brouillon", e -> handleSave(EventStatus.BROUILLON));
+        Button draftBtn = new Button("Sauvegarder Brouillon", e -> handleSave(EventStatus.BROUILLON));
         draftBtn.getStyle().set("height", "55px").set("padding", "0 30px");
 
-        Button publishBtn = new Button("Publier maintenant", e -> handleSave(EventStatus.PUBLIE));
+        Button publishBtn = new Button("Publier l'événement", e -> handleSave(EventStatus.PUBLIE));
         publishBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         publishBtn.getStyle().set("background-color", BRAND_BLUE).set("height", "55px").set("padding", "0 40px").set("font-weight", "800");
 
         actions.add(draftBtn, publishBtn);
 
         container.add(header, card, actions);
-    }
-
-    private VerticalLayout createUploadComponent() {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setPadding(false);
-        layout.setSpacing(false);
-
-        Label label = new Label("Image de l'événement");
-        label.getStyle().set("font-weight", "800").set("color", BRAND_BLUE).set("margin-bottom", "10px");
-
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
-        upload.setAcceptedFileTypes("image/jpeg", "image/png");
-        upload.setMaxFiles(1);
-
-        upload.addSucceededListener(event -> {
-            try {
-                String directoryPath = Paths.get("src/main/resources/static/images/events/").toAbsolutePath().toString();
-                File directory = new File(directoryPath);
-                if (!directory.exists()) directory.mkdirs();
-
-                String fileName = UUID.randomUUID().toString() + "_" + event.getFileName();
-                File targetFile = new File(directory, fileName);
-
-                try (FileOutputStream fos = new FileOutputStream(targetFile)) {
-                    fos.write(buffer.getInputStream().readAllBytes());
-                }
-
-                this.imagePathForDb = "images/events/" + fileName;
-                Notification.show("Image prête");
-            } catch (IOException e) {
-                Notification.show("Erreur d'upload");
-            }
-        });
-
-        layout.add(label, upload);
-        return layout;
     }
 
     private void loadEventData() {
@@ -220,48 +168,47 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
             description.setValue(e.getDescription());
             latField.setValue(e.getLatitude());
             lngField.setValue(e.getLongitude());
-            this.imagePathForDb = e.getImageUrl();
         });
     }
 
     private void handleSave(EventStatus status) {
-        if (titre.isEmpty() || categorie.getValue() == null || dateDebut.isEmpty() || prix.isEmpty()) {
-            Notification.show("Champs obligatoires manquants").addThemeVariants(NotificationVariant.LUMO_ERROR);
+        if (titre.isEmpty() || categorie.isEmpty() || dateDebut.isEmpty() || prix.isEmpty()) {
+            Notification.show("Veuillez remplir les champs obligatoires", 3000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
 
         try {
+            Event event;
             if (eventId == null) {
-                Event newEvent = eventService.createEvent(
+                // CREATION
+                event = eventService.createEvent(
                         currentUser.getId(), titre.getValue(), description.getValue(),
                         categorie.getValue(), dateDebut.getValue(), dateFin.getValue(),
                         lieu.getValue(), ville.getValue(), capacite.getValue().intValue(),
                         BigDecimal.valueOf(prix.getValue()),
                         latField.getValue(), lngField.getValue()
                 );
-                if (imagePathForDb != null) newEvent.setImageUrl(imagePathForDb);
-                if (status == EventStatus.PUBLIE) eventService.publishEvent(currentUser.getId(), newEvent.getId());
-                eventRepository.save(newEvent);
             } else {
-                Event e = eventRepository.findById(eventId).get();
-                e.setTitre(titre.getValue());
-                e.setDescription(description.getValue());
-                e.setCategorie(categorie.getValue());
-                e.setDateDebut(dateDebut.getValue());
-                e.setDateFin(dateFin.getValue());
-                e.setVille(ville.getValue());
-                e.setLieu(lieu.getValue());
-                e.setLatitude(latField.getValue());
-                e.setLongitude(lngField.getValue());
-                e.setCapaciteMax(capacite.getValue().intValue());
-                e.setPrixUnitaire(BigDecimal.valueOf(prix.getValue()));
-                e.setStatut(status);
-                if (imagePathForDb != null) e.setImageUrl(imagePathForDb);
-                eventRepository.save(e);
+                // UPDATE
+                event = eventService.updateEvent(
+                        currentUser.getId(), eventId, titre.getValue(), description.getValue(),
+                        categorie.getValue(), dateDebut.getValue(), dateFin.getValue(),
+                        lieu.getValue(), ville.getValue(), capacite.getValue().intValue(),
+                        BigDecimal.valueOf(prix.getValue())
+                );
+                // Mise à jour manuelle des champs non présents dans updateEvent du service
+                event.setLatitude(latField.getValue());
+                event.setLongitude(lngField.getValue());
             }
 
-            Notification.show("Succès").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            // Gestion du statut (Brouillon vs Publié)
+            if (status == EventStatus.PUBLIE) {
+                eventService.publishEvent(currentUser.getId(), event.getId());
+            }
+
+            Notification.show("Événement enregistré avec succès").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             NavigationManager.goToMyEvents();
+
         } catch (Exception e) {
             Notification.show("Erreur : " + e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }

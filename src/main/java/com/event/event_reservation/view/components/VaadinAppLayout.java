@@ -30,19 +30,32 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
     public VaadinAppLayout() {
         createHeader();
         createDrawer();
-        buildFooter(); // Utilise votre code exact
+        buildFooter();
     }
 
+    /**
+     * REDIRECTION AUTOMATIQUE : Gère l'Admin et l'Organisateur
+     */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         User user = VaadinSession.getCurrentUser();
-        if (user != null && user.getRole() == UserRole.ORGANIZER) {
-            if (event.getLocation().getPath().isEmpty() || event.getLocation().getPath().equals("/")) {
-                event.forwardTo("organizer/dashboard");
+        if (user != null) {
+            String path = event.getLocation().getPath();
+            boolean isRoot = path.isEmpty() || path.equals("/");
+
+            if (isRoot) {
+                if (user.getRole() == UserRole.ADMIN) {
+                    event.forwardTo("admin/dashboard");
+                } else if (user.getRole() == UserRole.ORGANIZER) {
+                    event.forwardTo("organizer/dashboard");
+                }
             }
         }
     }
 
+    /**
+     * AFFICHAGE DU CONTENU : Masque le marketing pour Admin et Organisateur
+     */
     @Override
     public void showRouterLayoutContent(HasElement content) {
         VerticalLayout mainLayout = new VerticalLayout();
@@ -60,9 +73,10 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         mainLayout.add(pageView);
 
         User user = VaadinSession.getCurrentUser();
-        boolean isOrganizer = (user != null && user.getRole() == UserRole.ORGANIZER);
+        boolean isStaff = (user != null && (user.getRole() == UserRole.ORGANIZER || user.getRole() == UserRole.ADMIN));
 
-        if (!isOrganizer) {
+        // Si ce n'est pas un membre du staff (Admin/Org), on affiche le contenu marketing
+        if (!isStaff) {
             mainLayout.add(buildFeaturesSection(), footerContainer);
         } else {
             mainLayout.getStyle().set("background-color", "#fcfdfe");
@@ -72,7 +86,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
-     * SECTION FONCTIONNALITÉS (VOTRE CODE EXACT)
+     * SECTION FONCTIONNALITÉS (BOLD 800)
      */
     private VerticalLayout buildFeaturesSection() {
         VerticalLayout section = new VerticalLayout();
@@ -80,7 +94,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         section.setAlignItems(FlexComponent.Alignment.CENTER);
         section.getStyle().set("padding", "80px 10%").set("background-color", "#fcfdfe");
 
-        // TITRE DE SECTION (BOLD 800)
         H2 sectionTitle = new H2("Fonctionnalités Clés de notre plateforme");
         sectionTitle.getStyle()
                 .set("color", BRAND_COLOR)
@@ -118,8 +131,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
                 .set("background-color", "white")
                 .set("border-radius", "25px")
                 .set("box-shadow", "0 15px 40px rgba(0, 0, 0, 0.06)")
-                .set("padding", "50px 35px")
-                .set("transition", "transform 0.3s ease");
+                .set("padding", "50px 35px");
 
         Image icon = new Image(ICON_PATH + iconName, "");
         icon.setHeight("70px");
@@ -147,13 +159,26 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
         User user = VaadinSession.getCurrentUser();
 
-        if (user != null && user.getRole() == UserRole.ORGANIZER) {
+        // --- NAVIGATION HEADER DYNAMIQUE ---
+        if (user != null && user.getRole() == UserRole.ADMIN) {
+            // MENU ADMIN
+            navMenu.add(
+                    createNavButton("Tableau de bord", e -> NavigationManager.goToAdminDashboard()),
+                    createNavButton("Utilisateurs", e -> NavigationManager.goToUserManagement()),
+                    createNavButton("Réservations", e -> NavigationManager.goToAllReservationsManagement()),
+                    createNavButton("Événements", e -> NavigationManager.goToAllEventsManagement()),
+                    createNavButton("Profil", e -> NavigationManager.goToProfile())
+            );
+        } else if (user != null && user.getRole() == UserRole.ORGANIZER) {
+            // MENU ORGANISATEUR
             navMenu.add(
                     createNavButton("Tableau de bord", e -> NavigationManager.goToOrganizerDashboard()),
+                    createNavButton("Événements", e -> NavigationManager.goToMyEvents()),
                     createNavButton("Gestion des événements", e -> NavigationManager.goToMyEvents()),
                     createNavButton("Profil", e -> NavigationManager.goToProfile())
             );
         } else if (user != null && user.getRole() == UserRole.CLIENT) {
+            // MENU CLIENT
             navMenu.add(
                     createNavButton("Événements", e -> NavigationManager.goToEventList()),
                     createNavButton("Tableau de bord", e -> NavigationManager.goToDashboard()),
@@ -161,6 +186,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
                     createNavButton("Mon Profil", e -> NavigationManager.goToProfile())
             );
         } else {
+            // PUBLIC
             navMenu.add(createNavButton("Événements", e -> NavigationManager.goToEventList()));
         }
 
@@ -189,6 +215,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
             authLayout.add(loginBtn, registerBtn);
         }
 
+        // RECHERCHE
         TextField searchInput = new TextField();
         searchInput.setPlaceholder("Rechercher...");
         searchInput.setVisible(false); searchInput.setWidth("0px");
@@ -211,7 +238,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         rightSide.add(authLayout, searchInput, searchBtn, themeToggle);
 
         HorizontalLayout header = new HorizontalLayout();
-        if (user != null && user.getRole() == UserRole.ADMIN) header.add(new DrawerToggle());
+        // Toggle masqué (On utilise uniquement le header pour Admin/Org)
         header.add(logo, navMenu, rightSide);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
@@ -222,9 +249,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         addToNavbar(header);
     }
 
-    /**
-     * FOOTER (VOTRE CODE EXACT)
-     */
     private void buildFooter() {
         footerContainer.setWidthFull();
         footerContainer.setPadding(false);
@@ -310,6 +334,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
     private void handleLogout() {
         VaadinSession.logout();
-        NavigationManager.goToLogin(); // redirection vers page d'Login
+        NavigationManager.goToLogin();
     }
 }

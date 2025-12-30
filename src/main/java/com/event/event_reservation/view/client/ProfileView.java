@@ -84,8 +84,13 @@ public class ProfileView extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
         header.getStyle().set("margin", "30px 0");
 
-        // --- LOGIQUE ICÔNE DYNAMIQUE SELON RÔLE ---
-        String iconFile = (currentUser.getRole() == UserRole.ORGANIZER) ? "organizer.svg" : "client.svg";
+        // --- LOGIQUE ICÔNE DYNAMIQUE MISE À JOUR (ADMIN INCLUS) ---
+        String iconFile = "client.svg"; // Par défaut
+        if (currentUser.getRole() == UserRole.ADMIN) {
+            iconFile = "admin.svg";
+        } else if (currentUser.getRole() == UserRole.ORGANIZER) {
+            iconFile = "organizer.svg";
+        }
         Image profileIcon = new Image(ICON_PATH + iconFile, "Profil");
         profileIcon.setWidth("60px");
 

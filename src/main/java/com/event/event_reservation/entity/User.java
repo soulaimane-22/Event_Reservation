@@ -39,15 +39,18 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
+    @Builder.Default // Indispensable pour que le Builder ne mette pas null
     @Column(nullable = false)
-    private LocalDateTime dateInscription;
+    private LocalDateTime dateInscription = LocalDateTime.now();
 
+    @Builder.Default // Indispensable pour que le Builder ne mette pas null
     @Column(nullable = false)
-    private Boolean actif;
+    private Boolean actif = true;
 
     @Column(length = 20)
     private String telephone;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private ThemePreference themePreference = ThemePreference.LIGHT;
 
@@ -75,9 +78,9 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        this.dateInscription = LocalDateTime.now();
+        if (this.dateInscription == null) this.dateInscription = LocalDateTime.now();
         this.dateModification = LocalDateTime.now();
-        this.actif = true;
+        if (this.actif == null) this.actif = true;
     }
 
     @PreUpdate

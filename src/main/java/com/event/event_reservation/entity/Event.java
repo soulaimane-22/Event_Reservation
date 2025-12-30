@@ -66,19 +66,23 @@ public class Event {
     @Column(length = 500)
     private String imageUrl;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus statut = EventStatus.BROUILLON;
 
-    @Column(nullable = false)
+    @Builder.Default
+    @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation = LocalDateTime.now();
 
     @Column
     private LocalDateTime dateModification;
 
+    @Builder.Default
     @Column(precision = 3, scale = 2)
     private BigDecimal moyenneNotes = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column
     private Integer nombreAvis = 0;
 
@@ -96,12 +100,17 @@ public class Event {
     @OneToMany(mappedBy = "evenement", cascade = CascadeType.REMOVE)
     private List<Notification> notifications;
 
-    /**
-     * AJOUT : Méthode utilitaire pour la compatibilité avec l'UI
-     * Retourne simplement la capacité restante.
-     */
+    /* ===================== HELPERS ===================== */
+
     public Integer getNbPlacesDisponibles() {
         return this.capaciteRestante != null ? this.capaciteRestante : 0;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.dateCreation == null) this.dateCreation = LocalDateTime.now();
+        // Initialisation automatique de la capacité restante à la création
+        if (this.capaciteRestante == null) this.capaciteRestante = this.capaciteMax;
     }
 
     @PreUpdate
