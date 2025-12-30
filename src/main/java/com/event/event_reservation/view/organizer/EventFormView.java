@@ -14,6 +14,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
@@ -68,7 +69,6 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
             return;
         }
 
-        // INITIALISATION DES DONNÉES DU MENU
         categorie.setItems(EventCategory.values());
 
         setSizeFull();
@@ -121,15 +121,12 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         formLayout.setWidthFull();
         formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("600px", 2));
 
-        // Configuration
         titre.setRequired(true);
         prix.setSuffixComponent(new Span("MAD"));
 
-        // Ajout des champs dans la grille
         formLayout.add(titre, categorie, dateDebut, dateFin, ville, lieu, latField, lngField, capacite, prix);
         formLayout.setColspan(titre, 2);
 
-        // DESCRIPTION EN PLEINE LARGEUR (Hors du FormLayout pour l'alignement)
         description.setWidthFull();
         description.setMinHeight("200px");
         description.getStyle().set("margin-top", "20px");
@@ -139,9 +136,16 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         // 3. ACTIONS
         HorizontalLayout actions = new HorizontalLayout();
         actions.setWidthFull();
-        actions.setJustifyContentMode(JustifyContentMode.END);
         actions.setSpacing(true);
         actions.getStyle().set("margin-top", "30px");
+
+        // --- NOUVEAU : BOUTON SUPPRIMER (UNIQUEMENT EN ÉDITION) ---
+        if (eventId != null) {
+            Button deleteBtn = new Button("Supprimer l'événement", e -> confirmDeletion());
+            deleteBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+            deleteBtn.getStyle().set("margin-right", "auto"); // Pousse les autres boutons à droite
+            actions.add(deleteBtn);
+        }
 
         Button draftBtn = new Button("Sauvegarder Brouillon", e -> handleSave(EventStatus.BROUILLON));
         draftBtn.getStyle().set("height", "55px").set("padding", "0 30px");
@@ -180,7 +184,6 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         try {
             Event event;
             if (eventId == null) {
-                // CREATION
                 event = eventService.createEvent(
                         currentUser.getId(), titre.getValue(), description.getValue(),
                         categorie.getValue(), dateDebut.getValue(), dateFin.getValue(),
@@ -189,19 +192,16 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
                         latField.getValue(), lngField.getValue()
                 );
             } else {
-                // UPDATE
                 event = eventService.updateEvent(
                         currentUser.getId(), eventId, titre.getValue(), description.getValue(),
                         categorie.getValue(), dateDebut.getValue(), dateFin.getValue(),
                         lieu.getValue(), ville.getValue(), capacite.getValue().intValue(),
                         BigDecimal.valueOf(prix.getValue())
                 );
-                // Mise à jour manuelle des champs non présents dans updateEvent du service
                 event.setLatitude(latField.getValue());
                 event.setLongitude(lngField.getValue());
             }
 
-            // Gestion du statut (Brouillon vs Publié)
             if (status == EventStatus.PUBLIE) {
                 eventService.publishEvent(currentUser.getId(), event.getId());
             }
@@ -212,5 +212,32 @@ public class EventFormView extends VerticalLayout implements HasUrlParameter<Lon
         } catch (Exception e) {
             Notification.show("Erreur : " + e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
+    }
+
+    /**
+     * LOGIQUE DE SUPPRESSION
+     */
+    private void confirmDeletion() {
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Supprimer l'événement ?");
+        dialog.setText("Êtes-vous sûr de vouloir supprimer définitivement '" + titre.getValue() + "' ? Cette action est irréversible.");
+
+        dialog.setCancelable(true);
+        dialog.setCancelText("Annuler");
+
+        dialog.setConfirmText("Supprimer");
+        dialog.setConfirmButtonTheme("error primary");
+
+        dialog.addConfirmListener(e -> {
+            try {
+                eventService.deleteEvent(currentUser.getId(), eventId);
+                Notification.show("Événement supprimé").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                NavigationManager.goToMyEvents();
+            } catch (Exception ex) {
+                Notification.show("Erreur : " + ex.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        dialog.open();
     }
 }

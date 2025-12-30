@@ -161,7 +161,12 @@ public class HomeView extends VerticalLayout {
         imageContainer.setHeight("240px");
         imageContainer.getStyle().set("position", "relative");
 
-        Image img = new Image(event.getImageUrl(), event.getTitre());
+        String url = event.getImageUrl();
+        if (url == null || url.isEmpty()) {
+            // Chemin vers une image par défaut dans src/main/resources/static/images/
+            url = "images/events/icons/event.svg";
+        }
+        Image img = new Image(url, event.getTitre());
         img.setWidthFull(); img.setHeightFull();
         img.getStyle().set("object-fit", "cover");
 
