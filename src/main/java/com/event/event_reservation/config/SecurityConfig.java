@@ -29,10 +29,6 @@ public class SecurityConfig {
                         // 2. RESSOURCES VAADIN (Indispensable pour le style et le JS)
                         .requestMatchers("/VAADIN/**", "/frontend/**", "/images/**", "/styles/**").permitAll()
                         .requestMatchers("/sw.js", "/offline.html", "/icons/**", "/line-awesome/**").permitAll()
-
-                        // 3. LE RESTE (DEV MODE)
-                        // Au lieu de restreindre par rôle (ADMIN, CLIENT...), on laisse tout passer pour l'instant.
-                        // Quand tu voudras réactiver la sécurité, il suffira de changer cette ligne.
                         .anyRequest().permitAll()
                 )
 
