@@ -217,6 +217,6 @@ Si vous avez des tests d’intégration avec une base H2 dédiée, vérifiez que
 
 ## ✉️ Contact & contribution
 
-- Développeur & Mainteneur : **soulaimane-22**
+- Développeur & Mainteneur : **soulaimane Benayad**
 - Email: benayad.soulaimane@etu.uae.ac.ma
 - Projet : Travail de Java Avancé — Spring Boot & Vaadin
