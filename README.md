@@ -178,10 +178,10 @@ Accès :
 ## 🧭 Structure du projet (extrait)
 - src/main/java/.../entity — Entités JPA (User, Event, Reservation, Ticket, etc.)
 - src/main/java/.../repository — Repositories Spring Data
-- src/main/java/.../service — Services métier (réservation, PDF, export CSV)
+- src/main/java/.../service — Services métier (réservation, txt, export CSV)
 - src/main/java/.../security — Configuration Spring Security
 - src/main/java/.../view — Vues Vaadin (Public, Client, Organizer, Admin)
-- src/main/resources/static — Images et assets statiques
+- src/main/resources/static — Images , svg, et assets statiques
 - src/main/resources/application.properties — Configuration
 - src/main/resources/data.sql — Données d’amorçage (comptes, exemple d’événement)
 
@@ -209,6 +209,7 @@ Si vous avez des tests d’intégration avec une base H2 dédiée, vérifiez que
 - Intégration d’un fournisseur de paiement (Stripe, CMI).
 - Envoi automatique des tickets par email (Spring Mail ou un service externe).
 - Authentification multi-tenants pour support SaaS multi-organisateurs.
+- Ratings
 - Déploiement Docker / Docker Compose + configuration facile pour une instance cloud.
 - Analytics temps réel / notifications push.
 
