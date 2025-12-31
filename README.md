@@ -1,4 +1,4 @@
-<img width="600" height="200" alt="Untitled design" src="https://github.com/user-attachments/assets/fe1c1fd9-606d-4919-89e1-b99d20965e29" />
+<img width="640" height="190" alt="Untitled design (1)" src="https://github.com/user-attachments/assets/ce07dda0-d5e7-4995-bd1a-1b4b12d873b5" />
 
 # 🎭 OCCASIO EVENT — Plateforme SaaS de billetterie
 
