@@ -1,3 +1,5 @@
+<img width="150" height="50" alt="Technologies-OCASSIO EVENT" src="https://github.com/user-attachments/assets/c23caaa6-9b5f-4b99-b9cc-87d2a7dbb34b" />
+
 # 🎭 OCCASIO EVENT — Plateforme SaaS de billetterie
 
 **OCCASIO EVENT** est une application web moderne pour la gestion des réservations d'événements (concerts, conférences, festivals...). Conçue pour le marché marocain et africain, l'application offre une UX "SaaS" fluide avec une interface 100% Java (Vaadin) et une architecture robuste côté serveur (Spring Boot).
