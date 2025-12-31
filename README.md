@@ -5,7 +5,7 @@
 **OCCASIO EVENT** est une application web moderne pour la gestion des réservations d'événements (concerts, conférences, festivals...). Conçue pour le marché marocain et africain, l'application offre une UX "SaaS" fluide avec une interface 100% Java (Vaadin) et une architecture robuste côté serveur (Spring Boot).
 
 Résumé technique
-- Backend : Spring Boot 3.x (Java 17+)
+- Backend : Spring Boot 3.5.7 (Java 17+)
 - Frontend : Vaadin Flow 24.x (UI server-side en Java)
 - Persistance : Spring Data JPA / Hibernate
 - Base de données de développement : H2 (mode Auto-Server / fichier)
@@ -19,7 +19,7 @@ Pour les clients
 - Page d’accueil immersive avec Hero Section et statistiques.
 - Recherche d’événements et filtrage.
 - Réservation simplifiée (calculateur de prix en MAD et vérification de disponibilité).
-- Génération & téléchargement de tickets officiels au format PDF.
+- Génération & téléchargement de tickets officiels au format TXT.
 - Dashboard personnel — historique des réservations et dépenses.
 
 Pour les organisateurs
@@ -48,7 +48,6 @@ Autres
 - Spring Data JPA + Hibernate
 - H2 Database (développement)
 - Maven (wrapper `mvnw` inclus)
-- Apache PDFBox (génération PDF)
 - (Optionnel) Lombok
 
 ---
