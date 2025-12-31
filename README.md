@@ -9,7 +9,6 @@ Résumé technique
 - Frontend : Vaadin Flow 24.x (UI server-side en Java)
 - Persistance : Spring Data JPA / Hibernate
 - Base de données de développement : H2 (mode Auto-Server / fichier)
-- Génération PDF : Apache PDFBox
 - Build & dépendances : Maven
 
 ---
