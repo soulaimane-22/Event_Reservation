@@ -1,13 +1,14 @@
+<img width="640" height="190" alt="Untitled design (1)" src="https://github.com/user-attachments/assets/ce07dda0-d5e7-4995-bd1a-1b4b12d873b5" />
+
 # 🎭 OCCASIO EVENT — Plateforme SaaS de billetterie
 
 **OCCASIO EVENT** est une application web moderne pour la gestion des réservations d'événements (concerts, conférences, festivals...). Conçue pour le marché marocain et africain, l'application offre une UX "SaaS" fluide avec une interface 100% Java (Vaadin) et une architecture robuste côté serveur (Spring Boot).
 
 Résumé technique
-- Backend : Spring Boot 3.x (Java 17+)
+- Backend : Spring Boot 3.5.7 (Java 17+)
 - Frontend : Vaadin Flow 24.x (UI server-side en Java)
 - Persistance : Spring Data JPA / Hibernate
 - Base de données de développement : H2 (mode Auto-Server / fichier)
-- Génération PDF : Apache PDFBox
 - Build & dépendances : Maven
 
 ---
@@ -18,7 +19,7 @@ Pour les clients
 - Page d’accueil immersive avec Hero Section et statistiques.
 - Recherche d’événements et filtrage.
 - Réservation simplifiée (calculateur de prix en MAD et vérification de disponibilité).
-- Génération & téléchargement de tickets officiels au format PDF.
+- Génération & téléchargement de tickets officiels au format TXT.
 - Dashboard personnel — historique des réservations et dépenses.
 
 Pour les organisateurs
@@ -47,7 +48,6 @@ Autres
 - Spring Data JPA + Hibernate
 - H2 Database (développement)
 - Maven (wrapper `mvnw` inclus)
-- Apache PDFBox (génération PDF)
 - (Optionnel) Lombok
 
 ---
@@ -178,10 +178,10 @@ Accès :
 ## 🧭 Structure du projet (extrait)
 - src/main/java/.../entity — Entités JPA (User, Event, Reservation, Ticket, etc.)
 - src/main/java/.../repository — Repositories Spring Data
-- src/main/java/.../service — Services métier (réservation, PDF, export CSV)
+- src/main/java/.../service — Services métier (réservation, txt, export CSV)
 - src/main/java/.../security — Configuration Spring Security
 - src/main/java/.../view — Vues Vaadin (Public, Client, Organizer, Admin)
-- src/main/resources/static — Images et assets statiques
+- src/main/resources/static — Images , svg, et assets statiques
 - src/main/resources/application.properties — Configuration
 - src/main/resources/data.sql — Données d’amorçage (comptes, exemple d’événement)
 
@@ -209,6 +209,7 @@ Si vous avez des tests d’intégration avec une base H2 dédiée, vérifiez que
 - Intégration d’un fournisseur de paiement (Stripe, CMI).
 - Envoi automatique des tickets par email (Spring Mail ou un service externe).
 - Authentification multi-tenants pour support SaaS multi-organisateurs.
+- Ratings
 - Déploiement Docker / Docker Compose + configuration facile pour une instance cloud.
 - Analytics temps réel / notifications push.
 
