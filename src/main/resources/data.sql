@@ -1,7 +1,6 @@
 -- ============================================
 -- 📄 data.sql - INITIALISATION COMPLÈTE
 -- 📁 Chemin: src/main/resources/data.sql
--- ✅ COORDONNÉES GPS CORRIGÉES (31/12/2024)
 -- ============================================
 
 -- 1. NETTOYAGE DES DONNÉES
