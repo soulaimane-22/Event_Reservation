@@ -142,7 +142,7 @@ Vérifications après démarrage :
 Selon `data.sql` fourni, les comptes suivants sont insérés à l'initialisation :
 
 - Administrateur : `admin@event.ma` / `admin123`  
-- Organisateur : `organizer1@event.ma` / `org123`  
+- Organisateur : `organizer1@event.ma` / `org12345`  
 - Client : `client1@event.ma` / `client123`
 
 (Vérifie `src/main/resources/data.sql` pour la liste exacte et les mots de passe.)
