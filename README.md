@@ -142,7 +142,7 @@ Vérifications après démarrage :
 Selon `data.sql` fourni, les comptes suivants sont insérés à l'initialisation :
 
 - Administrateur : `admin@event.ma` / `admin123`  
-- Organisateur : `organizer1@event.ma` / `org123`  
+- Organisateur : `organizer1@event.ma` / `org12345`  
 - Client : `client1@event.ma` / `client123`
 
 (Vérifie `src/main/resources/data.sql` pour la liste exacte et les mots de passe.)
@@ -217,6 +217,6 @@ Si vous avez des tests d’intégration avec une base H2 dédiée, vérifiez que
 
 ## ✉️ Contact & contribution
 
-- Développeur & Mainteneur : **soulaimane-22**
+- Développeur & Mainteneur : **soulaimane Benayad**
 - Email: benayad.soulaimane@etu.uae.ac.ma
 - Projet : Travail de Java Avancé — Spring Boot & Vaadin
