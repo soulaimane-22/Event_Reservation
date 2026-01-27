@@ -198,10 +198,10 @@ public class DashboardView extends VerticalLayout implements BeforeEnterObserver
     private Div createStatCard(String iconName, String label, String value, String color) {
         Div card = new Div();
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "25px")
                 .set("padding", "40px")
-                .set("box-shadow", "0 15px 35px rgba(0,0,0,0.05)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
                 .set("border-top", "6px solid " + color)
                 .set("transition", "transform 0.3s ease");
 

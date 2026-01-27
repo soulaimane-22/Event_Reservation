@@ -128,9 +128,11 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         card.setPadding(true);
         card.setAlignItems(FlexComponent.Alignment.CENTER);
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "25px")
-                .set("box-shadow", "0 15px 40px rgba(0, 0, 0, 0.06)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
+                .set("cursor", "pointer")
                 .set("padding", "50px 35px");
 
         Image icon = new Image(ICON_PATH + iconName, "");
@@ -211,6 +213,8 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
             Button registerBtn = new Button("S'inscrire", new Image(ICON_PATH + "s'inscrire.svg", ""));
             registerBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            registerBtn.getStyle().set("background-color", BRAND_COLOR);
+            registerBtn.getStyle().set("color", "white");
             registerBtn.addClickListener(e -> NavigationManager.goToRegister());
             authLayout.add(loginBtn, registerBtn);
         }

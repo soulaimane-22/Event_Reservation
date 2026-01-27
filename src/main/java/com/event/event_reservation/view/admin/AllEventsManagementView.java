@@ -107,10 +107,11 @@ public class AllEventsManagementView extends VerticalLayout {
         filterRow.setAlignItems(Alignment.END);
         filterRow.setSpacing(true);
         filterRow.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("padding", "25px")
                 .set("border-radius", "15px")
-                .set("box-shadow", "0 4px 15px rgba(0,0,0,0.05)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
                 .set("margin-bottom", "20px");
 
         searchField = new TextField("Rechercher");
@@ -157,9 +158,10 @@ public class AllEventsManagementView extends VerticalLayout {
         grid = new Grid<>(Event.class, false);
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
         grid.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "20px")
-                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.03)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
                 .set("overflow", "hidden");
         grid.setHeight("650px");
 

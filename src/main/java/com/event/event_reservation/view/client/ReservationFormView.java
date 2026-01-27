@@ -23,7 +23,16 @@ import com.event.event_reservation.service.ReservationService;
 import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 
+// Imports PDFBox 3.0.3
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
@@ -99,7 +108,6 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         title.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin", "0").set("font-size", "2.2em");
         header.add(ticketIcon, title);
 
-        // Carte Événement
         VerticalLayout eventCard = createStyledCard();
         H2 eventTitre = new H2(event.getTitre());
         eventTitre.getStyle().set("color", BRAND_BLUE).set("margin", "0 0 20px 0");
@@ -113,9 +121,8 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         );
         eventCard.add(eventTitre, infoGrid);
 
-        // Formulaire
         VerticalLayout formCard = createStyledCard();
-        placesField = new IntegerField("Combien de places souhaitez-vous ?");
+        placesField = new IntegerField("Nombre de places");
         placesField.setMin(1);
         placesField.setMax(Math.min(10, event.getCapaciteRestante()));
         placesField.setValue(1);
@@ -126,7 +133,6 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         commentField.setWidthFull();
         formCard.add(placesField, commentField);
 
-        // Résumé Prix
         VerticalLayout summaryCard = createStyledCard();
         summaryCard.getStyle().set("background-color", BRAND_BLUE).set("color", "white");
         HorizontalLayout priceRow = new HorizontalLayout();
@@ -157,9 +163,6 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         }
     }
 
-    /**
-     * ÉCRAN DE SUCCÈS AVEC OPTION DE TÉLÉCHARGEMENT DU TICKET
-     */
     private void showSuccessLayout(Reservation res) {
         removeAll();
         VerticalLayout layout = new VerticalLayout();
@@ -180,31 +183,22 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         Span code = new Span(res.getCodeReservation());
         code.getStyle().set("font-size", "2.5em").set("font-weight", "900").set("color", BRAND_BLUE).set("background", "#f1f3f9").set("padding", "15px 40px").set("border-radius", "15px").set("margin", "20px 0");
 
-        // --- BOUTON DE TÉLÉCHARGEMENT DU TICKET (FORMAT PDF) ---
-        StreamResource resource = new StreamResource("Ticket_" + res.getCodeReservation() + ".txt", () -> {
-            String content = "------------------------------------------\n" +
-                    "        TICKET DE RÉSERVATION\n" +
-                    "------------------------------------------\n" +
-                    "ÉVÉNEMENT : " + event.getTitre() + "\n" +
-                    "DATE : " + event.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "\n" +
-                    "LIEU : " + event.getVille() + " - " + event.getLieu() + "\n" +
-                    "------------------------------------------\n" +
-                    "CLIENT : " + currentUser.getPrenom() + " " + currentUser.getNom() + "\n" +
-                    "PLACES : " + res.getNombrePlaces() + "\n" +
-                    "PRIX TOTAL : " + res.getMontantTotal() + " MAD\n" +
-                    "CODE UNIQUE : " + res.getCodeReservation() + "\n" +
-                    "------------------------------------------\n" +
-                    "Merci de votre confiance !";
-            return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        StreamResource resource = new StreamResource("Ticket_" + res.getCodeReservation() + ".pdf", () -> {
+            try {
+                return generateTicketPdf(res);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ByteArrayInputStream("Erreur PDF".getBytes());
+            }
         });
 
         Anchor downloadTicket = new Anchor(resource, "");
         downloadTicket.getElement().setAttribute("download", true);
 
-        Button btnDownload = new Button("Télécharger mon ticket (TXT)");
-        btnDownload.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        Button btnDownload = new Button("📄 Télécharger mon ticket (PDF)");
+        btnDownload.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
         btnDownload.setWidthFull();
-        btnDownload.getStyle().set("height", "55px").set("margin-bottom", "10px");
+        btnDownload.getStyle().set("height", "55px").set("margin-bottom", "10px").set("font-weight", "800");
         downloadTicket.add(btnDownload);
 
         Button btnMyRes = new Button("Retour à mes réservations", e -> UI.getCurrent().navigate("my-reservations"));
@@ -216,7 +210,92 @@ public class ReservationFormView extends VerticalLayout implements HasUrlParamet
         add(layout);
     }
 
-    // Helpers
+    /**
+     * Génère un PDF valide pour PDFBox 3.x
+     */
+    private ByteArrayInputStream generateTicketPdf(Reservation res) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                float width = page.getMediaBox().getWidth();
+                float height = page.getMediaBox().getHeight();
+
+                PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+                PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+
+                // TITRE (Couleur convertie en float 0.0 - 1.0 pour PDFBox)
+                contentStream.beginText();
+                contentStream.setFont(fontBold, 22);
+                contentStream.setNonStrokingColor(37/255f, 51/255f, 102/255f);
+                contentStream.newLineAtOffset(50, height - 60);
+                contentStream.showText("TICKET DE RESERVATION");
+                contentStream.endText();
+
+                // LIGNE DE SÉPARATION
+                contentStream.setLineWidth(1.5f);
+                contentStream.moveTo(50, height - 75);
+                contentStream.lineTo(width - 50, height - 75);
+                contentStream.stroke();
+
+                float y = height - 120;
+
+                // INFOS ÉVÉNEMENT (On retire les accents pour éviter les erreurs de police Helvetica)
+                y = addPdfLine(contentStream, fontBold, fontRegular, 14, 50, y, "EVENEMENT : ", cleanAccents(event.getTitre()));
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "DATE : ", event.getDateDebut().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "HEURE : ", event.getDateDebut().format(DateTimeFormatter.ofPattern("HH:mm")));
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "VILLE : ", cleanAccents(event.getVille()));
+
+                y -= 30;
+                contentStream.setLineWidth(0.5f);
+                contentStream.moveTo(50, y);
+                contentStream.lineTo(width - 50, y);
+                contentStream.stroke();
+                y -= 30;
+
+                // INFOS CLIENT
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "CLIENT : ", cleanAccents(currentUser.getPrenom() + " " + currentUser.getNom()));
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "PLACES : ", String.valueOf(res.getNombrePlaces()));
+                y = addPdfLine(contentStream, fontBold, fontRegular, 12, 50, y, "TOTAL : ", res.getMontantTotal() + " MAD");
+
+                // ENCADRÉ DU CODE
+                y -= 80;
+                contentStream.setNonStrokingColor(230/255f, 230/255f, 235/255f);
+                contentStream.addRect(100, y, width - 200, 60);
+                contentStream.fill();
+
+                contentStream.setNonStrokingColor(37/255f, 51/255f, 102/255f);
+                contentStream.beginText();
+                contentStream.setFont(fontBold, 26);
+                contentStream.newLineAtOffset(200, y + 20);
+                contentStream.showText(res.getCodeReservation());
+                contentStream.endText();
+            }
+            document.save(baos);
+        }
+        return new ByteArrayInputStream(baos.toByteArray());
+    }
+
+    private float addPdfLine(PDPageContentStream cs, PDType1Font bold, PDType1Font reg, int size, float x, float y, String label, String value) throws Exception {
+        cs.beginText();
+        cs.setFont(bold, size);
+        cs.newLineAtOffset(x, y);
+        cs.showText(label);
+        cs.setFont(reg, size);
+        cs.showText(value != null ? value : "");
+        cs.endText();
+        return y - 20;
+    }
+
+    // Supprime les accents pour éviter le plantage PDF
+    private String cleanAccents(String src) {
+        if (src == null) return "";
+        return src.replace("é", "e").replace("è", "e").replace("à", "a").replace("ê", "e").replace("ç", "c").replace("ô", "o");
+    }
+
     private HorizontalLayout createMiniInfo(String icon, String text) {
         HorizontalLayout row = new HorizontalLayout(new Image(ICON_PATH + icon, ""), new Span(text));
         row.setAlignItems(Alignment.CENTER);
