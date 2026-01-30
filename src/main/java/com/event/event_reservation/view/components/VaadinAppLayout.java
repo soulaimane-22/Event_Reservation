@@ -1,5 +1,7 @@
 package com.event.event_reservation.view.components;
 
+import com.event.event_reservation.chat.service.ChatAiService;
+import com.event.event_reservation.chat.view.ChatWidget;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -18,6 +20,7 @@ import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
 import com.event.event_reservation.entity.User;
 import com.event.event_reservation.entity.enums.UserRole;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
@@ -27,7 +30,16 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
     private final String ICON_PATH = "images/events/icons/";
     private final VerticalLayout footerContainer = new VerticalLayout();
 
-    public VaadinAppLayout() {
+    // --- AJOUT CHATBOT ---
+    private final ChatAiService chatAiService;
+    private final ChatWidget chatWidget;
+    private boolean isChatVisible = false;
+
+    @Autowired
+    public VaadinAppLayout(ChatAiService chatAiService) {
+        this.chatAiService = chatAiService;
+        this.chatWidget = new ChatWidget(chatAiService);
+
         createHeader();
         createDrawer();
         buildFooter();
@@ -55,6 +67,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
     /**
      * AFFICHAGE DU CONTENU : Masque le marketing pour Admin et Organisateur
+     * Ajout de l'overlay du Chatbot
      */
     @Override
     public void showRouterLayoutContent(HasElement content) {
@@ -63,7 +76,7 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         mainLayout.setSpacing(false);
         mainLayout.setMargin(false);
         mainLayout.setWidthFull();
-        mainLayout.getStyle().set("min-height", "100vh");
+        mainLayout.getStyle().set("min-height", "100vh").set("position", "relative");
 
         Div pageView = new Div();
         pageView.setWidthFull();
@@ -82,7 +95,45 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
             mainLayout.getStyle().set("background-color", "#fcfdfe");
         }
 
+        // --- INJECTION DU CHATBOT DANS LE LAYOUT ---
+        mainLayout.add(this.chatWidget, createChatFloatingButton());
+
         setContent(mainLayout);
+    }
+
+    /**
+     * BOUTON FLOTTANT DU CHATBOT
+     */
+    private Button createChatFloatingButton() {
+        Button chatFab = new Button(VaadinIcon.CHAT.create());
+        chatFab.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+
+        var s = chatFab.getStyle();
+        s.set("position", "fixed");
+        s.set("bottom", "30px");
+        s.set("right", "30px");
+        s.set("width", "65px");
+        s.set("height", "65px");
+        s.set("border-radius", "50%");
+        s.set("background-color", BRAND_COLOR);
+        s.set("box-shadow", "0 10px 25px rgba(0,0,0,0.3)");
+        s.set("z-index", "10000");
+        s.set("cursor", "pointer");
+
+        // Positionnement de la fenêtre de chat
+        this.chatWidget.getStyle().set("position", "fixed");
+        this.chatWidget.getStyle().set("bottom", "110px");
+        this.chatWidget.getStyle().set("right", "30px");
+        this.chatWidget.getStyle().set("z-index", "9999");
+        this.chatWidget.setVisible(isChatVisible);
+
+        chatFab.addClickListener(e -> {
+            isChatVisible = !isChatVisible;
+            chatWidget.setVisible(isChatVisible);
+            chatFab.setIcon(isChatVisible ? VaadinIcon.CLOSE.create() : VaadinIcon.CHAT.create());
+        });
+
+        return chatFab;
     }
 
     /**
@@ -128,9 +179,11 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         card.setPadding(true);
         card.setAlignItems(FlexComponent.Alignment.CENTER);
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "25px")
-                .set("box-shadow", "0 15px 40px rgba(0, 0, 0, 0.06)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
+                .set("cursor", "pointer")
                 .set("padding", "50px 35px");
 
         Image icon = new Image(ICON_PATH + iconName, "");
@@ -161,7 +214,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
         // --- NAVIGATION HEADER DYNAMIQUE ---
         if (user != null && user.getRole() == UserRole.ADMIN) {
-            // MENU ADMIN
             navMenu.add(
                     createNavButton("Tableau de bord", e -> NavigationManager.goToAdminDashboard()),
                     createNavButton("Utilisateurs", e -> NavigationManager.goToUserManagement()),
@@ -170,7 +222,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
                     createNavButton("Profil", e -> NavigationManager.goToProfile())
             );
         } else if (user != null && user.getRole() == UserRole.ORGANIZER) {
-            // MENU ORGANISATEUR
             navMenu.add(
                     createNavButton("Tableau de bord", e -> NavigationManager.goToOrganizerDashboard()),
                     createNavButton("Événements", e -> NavigationManager.goToMyEvents()),
@@ -178,7 +229,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
                     createNavButton("Profil", e -> NavigationManager.goToProfile())
             );
         } else if (user != null && user.getRole() == UserRole.CLIENT) {
-            // MENU CLIENT
             navMenu.add(
                     createNavButton("Événements", e -> NavigationManager.goToEventList()),
                     createNavButton("Tableau de bord", e -> NavigationManager.goToDashboard()),
@@ -186,7 +236,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
                     createNavButton("Mon Profil", e -> NavigationManager.goToProfile())
             );
         } else {
-            // PUBLIC
             navMenu.add(createNavButton("Événements", e -> NavigationManager.goToEventList()));
         }
 
@@ -211,6 +260,8 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
 
             Button registerBtn = new Button("S'inscrire", new Image(ICON_PATH + "s'inscrire.svg", ""));
             registerBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            registerBtn.getStyle().set("background-color", BRAND_COLOR);
+            registerBtn.getStyle().set("color", "white");
             registerBtn.addClickListener(e -> NavigationManager.goToRegister());
             authLayout.add(loginBtn, registerBtn);
         }
@@ -238,7 +289,6 @@ public class VaadinAppLayout extends AppLayout implements BeforeEnterObserver {
         rightSide.add(authLayout, searchInput, searchBtn, themeToggle);
 
         HorizontalLayout header = new HorizontalLayout();
-        // Toggle masqué (On utilise uniquement le header pour Admin/Org)
         header.add(logo, navMenu, rightSide);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();

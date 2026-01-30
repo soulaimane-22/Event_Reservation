@@ -122,11 +122,12 @@ public class AllReservationsView extends VerticalLayout {
     private Div createStatMiniCard(String label, String value, String color) {
         Div card = new Div();
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "15px")
                 .set("padding", "20px")
                 .set("border-top", "5px solid " + BRAND_BLUE)
-                .set("box-shadow", "0 4px 12px rgba(0,0,0,0.03)");
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease");
         card.setWidth("23%"); // Largeur diminuée
 
         Span val = new Span(value);
@@ -141,7 +142,7 @@ public class AllReservationsView extends VerticalLayout {
 
     private Div createCategoryBreakdownCard(Map<String, Long> byCat) {
         Div card = new Div();
-        card.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "15px 20px").set("box-shadow", "0 4px 12px rgba(0,0,0,0.03)");
+        card.getStyle().set("background-color", "#EFF1FC").set("border-radius", "15px").set("padding", "15px 20px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease");
         card.setWidth("45%");
 
         Span title = new Span("Top Catégories");
@@ -162,7 +163,7 @@ public class AllReservationsView extends VerticalLayout {
         HorizontalLayout filterRow = new HorizontalLayout();
         filterRow.setWidthFull();
         filterRow.setAlignItems(Alignment.END);
-        filterRow.getStyle().set("background", "white").set("padding", "25px").set("border-radius", "15px").set("box-shadow", "0 4px 15px rgba(0,0,0,0.05)").set("margin-bottom", "20px");
+        filterRow.getStyle().set("background", "#EFF1FC").set("padding", "25px").set("border-radius", "15px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease").set("margin-bottom", "20px");
 
         searchField = new TextField("Rechercher");
         searchField.setPlaceholder("Code, Client ou Événement...");
@@ -235,7 +236,7 @@ public class AllReservationsView extends VerticalLayout {
     private void createGrid() {
         grid = new Grid<>(Reservation.class, false);
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
-        grid.getStyle().set("background-color", "white").set("border-radius", "20px").set("box-shadow", "0 10px 30px rgba(0,0,0,0.03)").set("overflow", "hidden");
+        grid.getStyle().set("background-color", "#EFF1FC").set("border-radius", "20px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease").set("overflow", "hidden");
         grid.setHeight("600px");
 
         grid.addColumn(Reservation::getCodeReservation).setHeader("CODE").setAutoWidth(true).setSortable(true);

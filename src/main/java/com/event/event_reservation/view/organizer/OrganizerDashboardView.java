@@ -135,11 +135,11 @@ public class OrganizerDashboardView extends VerticalLayout implements BeforeEnte
         card.setWidth("260px");
 
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "15px")
                 .set("border-top", "6px solid " + BRAND_BLUE)
                 .set("padding", "25px 20px")
-                .set("box-shadow", "0 8px 25px rgba(0,0,0,0.04)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
                 .set("transition", "transform 0.3s ease");
 
         Image icon = new Image(ICON_PATH + iconName, "");
@@ -210,7 +210,7 @@ public class OrganizerDashboardView extends VerticalLayout implements BeforeEnte
 
     private VerticalLayout createChartCard(String title) {
         VerticalLayout card = new VerticalLayout();
-        card.getStyle().set("background-color", "white").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0 8px 25px rgba(0,0,0,0.03)");
+        card.getStyle().set("background-color", "#EFF1FC").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease");
         card.setWidth("50%");
         H3 h3 = new H3(title);
         h3.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin-bottom", "20px").set("font-size", "1.1em");
@@ -261,9 +261,10 @@ public class OrganizerDashboardView extends VerticalLayout implements BeforeEnte
     private void createRecentEventsTable() {
         VerticalLayout section = new VerticalLayout();
         section.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "20px")
-                .set("box-shadow", "0 10px 40px rgba(0,0,0,0.03)")
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
                 .set("padding", "35px");
 
         H2 title = new H2("Événements récents");
@@ -303,7 +304,7 @@ public class OrganizerDashboardView extends VerticalLayout implements BeforeEnte
     private Span createStatusBadge(Event event) {
         Span badge = new Span(event.getStatut().toString());
         var s = badge.getStyle();
-        s.set("padding", "4px 10px").set("border-radius", "15px").set("font-size", "0.7em").set("font-weight", "bold").set("color", "white");
+        s.set("padding", "4px 10px").set("border-radius", "15px").set("font-size", "0.7em").set("font-weight", "bold").set("color", "#EFF1FC").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease");
 
         String color = switch (event.getStatut()) {
             case PUBLIE -> "#10b981";

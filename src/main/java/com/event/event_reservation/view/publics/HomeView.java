@@ -5,6 +5,7 @@ import com.event.event_reservation.entity.Event;
 import com.event.event_reservation.entity.enums.EventStatus;
 import com.event.event_reservation.service.EventService;
 import com.event.event_reservation.view.components.VaadinAppLayout;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
@@ -30,16 +31,14 @@ public class HomeView extends VerticalLayout {
     public HomeView(EventService eventService) {
         this.eventService = eventService;
 
-        // Configuration Plein Écran
+        // Configuration Plein Écran (Edge-to-Edge)
         setPadding(false);
         setSpacing(false);
         setMargin(false);
         setWidthFull();
 
-        // 1. HERO SECTION (Texte pur sur Gradient)
         createHeroSection();
 
-        // Conteneur pour la grille
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
         content.setSpacing(true);
@@ -52,59 +51,65 @@ public class HomeView extends VerticalLayout {
                 .sorted(Comparator.comparing(Event::getDateDebut))
                 .toList();
 
-        // 2. Grille des événements
         createEventsGridSection(content, allEvents);
 
         add(content);
         createCallToAction();
     }
 
+    /**
+     * Hero Section avec bouton flottant blanc au centre en bas
+     */
     private void createHeroSection() {
-        Div hero = new Div();
-        hero.setWidthFull();
-        hero.setHeight("500px");
-        hero.getStyle()
-                .set("background", "linear-gradient(135deg, " + BRAND_BLUE + " 0%, #435591 100%)")
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "center")
-                .set("color", "white")
-                .set("position", "relative")
-                .set("overflow", "hidden");
-
-        // Cercle décoratif discret
-        Span decoration = new Span();
-        decoration.getStyle()
-                .set("position", "absolute").set("top", "-100px").set("right", "-100px")
-                .set("width", "400px").set("height", "400px")
-                .set("border-radius", "50%")
-                .set("background", "rgba(255,255,255,0.05)");
-        hero.add(decoration);
-
-        VerticalLayout heroContent = new VerticalLayout();
-        heroContent.setAlignItems(Alignment.CENTER);
-        heroContent.setSpacing(true);
-
-        H1 title = new H1("Réservez vos moments inoubliables");
-        title.getStyle()
-                .set("font-size", "3.5em")
+        // 1. Conteneur principal avec position relative pour placer le bouton
+        Div heroContainer = new Div();
+        heroContainer.setWidthFull();
+        heroContainer.getStyle()
                 .set("margin", "0")
-                .set("text-align", "center")
-                .set("font-weight", "800")
-                .set("text-shadow", "2px 2px 15px rgba(0,0,0,0.2)");
+                .set("padding", "0")
+                .set("overflow", "hidden")
+                .set("background-color", "#0b1635")
+                .set("position", "relative")
+                .set("line-height", "0");
 
-        Paragraph subtitle = new Paragraph("La plateforme de référence pour la billetterie et la gestion d'événements au Maroc.");
-        subtitle.getStyle()
-                .set("font-size", "1.4em")
-                .set("max-width", "700px")
-                .set("text-align", "center")
-                .set("opacity", "0.9");
+        // 2. L'image de fond
+        Image heroImg = new Image("images/events/logos/HeroSectionImage.png", "Hero Section");
+        heroImg.getStyle()
+                .set("width", "100%")
+                .set("height", "auto")
+                .set("display", "block")
+                .set("object-fit", "cover");
 
-        heroContent.add(title, subtitle);
-        hero.add(heroContent);
-        add(hero);
+        // 3. Le Bouton "Découvrir les événements"
+        Button exploreBtn = new Button("Découvrir les événements");
+        exploreBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        exploreBtn.getStyle()
+                .set("position", "absolute")
+                .set("bottom", "90px")
+                .set("left", "50%")
+                .set("transform", "translateX(-50%)")
+                .set("background-color", "#EFF1FC")
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "900")
+                .set("font-size", "1.6em")
+                .set("padding", "25px 70px")
+                .set("border-radius", "10px")
+                .set("box-shadow", "0 15px 40px rgba(0,0,0,0.4)")
+                .set("cursor", "pointer")
+                .set("border", "none")
+                .set("z-index", "10")
+                .set("text-transform", "uppercase")
+                .set("letter-spacing", "1px");
+
+        exploreBtn.addClickListener(e -> NavigationManager.goToEventList());
+
+        heroContainer.add(heroImg, exploreBtn);
+        add(heroContainer);
     }
 
+    /**
+     * MODIFIÉ : Titre déplacé en haut avec taille augmentée et sous-titre après
+     */
     private void createEventsGridSection(VerticalLayout container, List<Event> events) {
         VerticalLayout titleBlock = new VerticalLayout();
         titleBlock.setAlignItems(Alignment.CENTER);
@@ -112,22 +117,24 @@ public class HomeView extends VerticalLayout {
         titleBlock.setPadding(false);
         titleBlock.getStyle().set("margin-bottom", "50px");
 
+        // Titre principal mis en premier et agrandi
+        H2 mainHeading = new H2("Les événements incontournables");
+        mainHeading.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-size", "3em")
+                .set("margin-bottom", "10px")
+                .set("font-weight", "800");
+
+        // Sous-titre placé après le titre
         Span sub = new Span("Event Reservation - Votre plateforme de billetterie au Maroc et en Afrique");
         sub.getStyle()
                 .set("color", BRAND_BLUE)
                 .set("font-weight", "600")
-                .set("font-size", "0.95em")
+                .set("font-size", "1.5em")
                 .set("opacity", "0.8")
                 .set("letter-spacing", "0.5px");
 
-        H2 mainHeading = new H2("Les événements incontournables");
-        mainHeading.getStyle()
-                .set("color", BRAND_BLUE)
-                .set("font-size", "2.5em")
-                .set("margin-top", "10px")
-                .set("font-weight", "700");
-
-        titleBlock.add(sub, mainHeading);
+        titleBlock.add(mainHeading, sub);
 
         Div grid = new Div();
         grid.setWidthFull();
@@ -153,8 +160,11 @@ public class HomeView extends VerticalLayout {
                 .set("background", "white")
                 .set("border-radius", "20px")
                 .set("overflow", "hidden")
-                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.08)")
-                .set("transition", "transform 0.3s ease");
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease")
+                .set("cursor", "pointer");
+
+        card.addClickListener(e -> NavigationManager.goToEventDetail(event.getId()));
 
         Div imageContainer = new Div();
         imageContainer.setWidthFull();
@@ -162,13 +172,11 @@ public class HomeView extends VerticalLayout {
         imageContainer.getStyle().set("position", "relative");
 
         String url = event.getImageUrl();
-        if (url == null || url.isEmpty()) {
-            // Chemin vers une image par défaut dans src/main/resources/static/images/
-            url = "images/events/icons/event.svg";
-        }
+        if (url == null || url.isEmpty()) { url = "images/events/icons/event.svg"; }
         Image img = new Image(url, event.getTitre());
         img.setWidthFull(); img.setHeightFull();
         img.getStyle().set("object-fit", "cover");
+        imageContainer.add(img);
 
         if (event.getNbPlacesDisponibles() <= 0) {
             Span soldOut = new Span("COMPLET");
@@ -188,7 +196,7 @@ public class HomeView extends VerticalLayout {
         body.getStyle().set("padding", "30px");
 
         H3 title = new H3(event.getTitre());
-        title.getStyle().set("color", BRAND_BLUE).set("margin", "0 0 20px 0").set("font-size", "1.4em");
+        title.getStyle().set("color", BRAND_BLUE).set("margin", "0 0 15px 0").set("font-size", "1.4em").set("font-weight", "800");
 
         body.add(title);
         body.add(createInfoRow("date_time.svg", event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy", Locale.FRENCH))));
@@ -204,16 +212,6 @@ public class HomeView extends VerticalLayout {
         priceRow.add(priceValue);
         body.add(priceRow);
 
-        Button detailsBtn = new Button("Détails de l'événement");
-        detailsBtn.setWidthFull();
-        detailsBtn.getStyle()
-                .set("margin-top", "25px")
-                .set("background-color", BRAND_BLUE)
-                .set("color", "white")
-                .set("height", "50px");
-        detailsBtn.addClickListener(e -> NavigationManager.goToEventDetail(event.getId()));
-
-        body.add(detailsBtn);
         card.add(imageContainer, body);
 
         card.getElement().executeJs("this.onmouseover = () => { this.style.transform = 'translateY(-15px)'; }; " +

@@ -188,7 +188,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
         Div track = new Div();
         track.setWidthFull(); track.setHeight("12px");
-        track.getStyle().set("background-color", "#f0f2f5").set("border-radius", "6px").set("margin-top", "5px");
+        track.getStyle().set("background-color", "#EFF1FC").set("border-radius", "6px").set("margin-top", "5px").set("transition", "transform 0.3s ease").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)");
 
         Div fill = new Div();
         double percent = (value / maxValue) * 100;
@@ -222,7 +222,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
     private VerticalLayout createAnalyticsCard(String title) {
         VerticalLayout card = new VerticalLayout();
-        card.getStyle().set("background-color", "white").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0 8px 20px rgba(0,0,0,0.03)");
+        card.getStyle().set("background-color", "#EFF1FC").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease");
         card.setWidth("50%");
         H3 h3 = new H3(title);
         h3.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin-bottom", "25px").set("font-size", "1.1em");
@@ -235,11 +235,12 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         card.setAlignItems(Alignment.CENTER);
         card.setJustifyContentMode(JustifyContentMode.CENTER);
         card.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "#EFF1FC")
                 .set("border-radius", "15px")
                 .set("border-top", "6px solid " + BRAND_BLUE)
                 .set("padding", "25px 15px")
-                .set("box-shadow", "0 8px 20px rgba(0,0,0,0.04)");
+                .set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)")
+                .set("transition", "transform 0.3s ease");
 
         Image icon = new Image(ICON_PATH + iconName, "");
         icon.setHeight("30px");
@@ -280,7 +281,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
     private VerticalLayout createBreakdownCard(String title, String[] labels, String[] values) {
         VerticalLayout card = new VerticalLayout();
-        card.getStyle().set("background-color", "white").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0 10px 40px rgba(0,0,0,0.03)");
+        card.getStyle().set("background-color", "#EFF1FC").set("border-radius", "20px").set("padding", "30px").set("box-shadow", "0px 7px 29px 0px rgba(37, 51, 102, 0.4)").set("transition", "transform 0.3s ease");
         H3 h3 = new H3(title);
         h3.getStyle().set("color", BRAND_BLUE).set("font-weight", "800").set("margin-bottom", "20px");
         card.add(h3);

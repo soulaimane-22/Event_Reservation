@@ -6,13 +6,16 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.router.*;
 import com.event.event_reservation.config.NavigationManager;
 import com.event.event_reservation.config.VaadinSession;
 import com.event.event_reservation.entity.Event;
 import com.event.event_reservation.repository.EventRepository;
+import com.event.event_reservation.view.client.ReservationFormView;
 import com.event.event_reservation.view.components.VaadinAppLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,10 +38,12 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
     public EventDetailView(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
 
-        // Configuration Plein Écran pour l'image
+        // CONFIGURATION PLEIN ÉCRAN TOTAL (Supprime tout l'espace blanc)
+        setSizeFull();
         setPadding(false);
         setSpacing(false);
-        setWidthFull();
+        setMargin(false);
+        getStyle().set("background-color", "white");
     }
 
     @Override
@@ -64,149 +69,151 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
     private void createContent() {
         removeAll();
 
-        // 1. IMAGE EDGE-TO-EDGE
-        Div heroImage = new Div();
-        heroImage.setWidthFull();
-        heroImage.setHeight("500px");
-        heroImage.getStyle()
-                .set("background-image", "url('" + event.getImageUrl() + "')")
-                .set("background-size", "cover")
-                .set("background-position", "center")
-                .set("box-shadow", "inset 0 -100px 100px -50px rgba(0,0,0,0.2)");
+        // 1. CONTENEUR SPLIT (H: 100vh pour forcer l'affichage)
+        HorizontalLayout mainSplit = new HorizontalLayout();
+        mainSplit.setWidthFull();
+        mainSplit.setHeight("100vh"); // Occupe toute la hauteur de l'écran
+        mainSplit.setSpacing(false);
+        mainSplit.setPadding(false);
+        mainSplit.setMargin(false);
 
-        // 2. CONTENEUR DE CONTENU (CENTRÉ)
-        VerticalLayout mainContent = new VerticalLayout();
-        mainContent.setMaxWidth("1100px");
-        mainContent.getStyle().set("margin", "0 auto");
-        mainContent.setPadding(true);
-        mainContent.getStyle().set("margin-top", "-60px");
+        // 2. COLONNE GAUCHE : IMAGE FORCÉE
+        Div imageSide = new Div();
+        imageSide.setWidth("50%");
+        imageSide.setHeightFull();
+        imageSide.getStyle().set("overflow", "hidden");
 
-        // Card Blanche pour les infos
-        VerticalLayout infoCard = new VerticalLayout();
-        infoCard.getStyle()
-                .set("background", "white")
-                .set("border-radius", "20px")
-                .set("padding", "40px")
-                .set("box-shadow", "0 15px 35px rgba(0,0,0,0.1)");
+        // Utilisation d'un composant Image pour garantir la visibilité
+        String url = (event.getImageUrl() != null) ? event.getImageUrl() : "images/events/default-event.jpg";
+        Image eventImg = new Image(url, event.getTitre());
+        eventImg.setWidth("100%");
+        eventImg.setHeight("100%");
+        eventImg.getStyle().set("object-fit", "cover"); // Remplit sans déformer
 
-        // Titre et Catégorie
-        H1 title = new H1(event.getTitre());
-        title.getStyle().set("color", BRAND_BLUE).set("margin", "0");
+        imageSide.add(eventImg);
 
-        Span categoryBadge = new Span(event.getCategorie().toString());
-        categoryBadge.getStyle()
-                .set("background", "#f0f2f5")
+        // 3. COLONNE DROITE : CONTENU SCROLLABLE
+        VerticalLayout infoSide = new VerticalLayout();
+        infoSide.setWidth("50%");
+        infoSide.setHeightFull();
+        infoSide.setPadding(false);
+        infoSide.setSpacing(false);
+
+        // Zone de texte interne
+        VerticalLayout scrollContent = new VerticalLayout();
+        scrollContent.setPadding(true);
+        scrollContent.getStyle().set("padding", "60px");
+        scrollContent.setSpacing(true);
+
+        // Catégorie
+        Span category = new Span(event.getCategorie().toString());
+        category.getStyle()
+                .set("background", "#F1F3F9")
                 .set("color", BRAND_BLUE)
-                .set("padding", "5px 15px")
-                .set("border-radius", "5px")
-                .set("font-weight", "600");
+                .set("padding", "8px 20px")
+                .set("border-radius", "50px")
+                .set("font-weight", "800")
+                .set("font-size", "0.8em");
 
-        HorizontalLayout header = new HorizontalLayout(title, categoryBadge);
-        header.setAlignItems(Alignment.CENTER);
-        header.setWidthFull();
-        header.setFlexGrow(1, title);
+        // Titre
+        H1 title = new H1(event.getTitre());
+        title.getStyle()
+                .set("color", BRAND_BLUE)
+                .set("font-weight", "900")
+                .set("font-size", "3.2em")
+                .set("margin", "10px 0");
 
-        infoCard.add(header, new Hr());
-
-        // --- PRÉPARATION DU LAYOUT POUR LE LIEU (AVEC ICÔNE MAPS) ---
-        HorizontalLayout locationValueLayout = new HorizontalLayout(new Span(event.getLieu()));
-        locationValueLayout.setAlignItems(Alignment.CENTER);
-
-        if (event.getLatitude() != null && event.getLongitude() != null) {
-            String mapUrl = "https://www.google.com/maps/search/?api=1&query=" + event.getLatitude() + "," + event.getLongitude();
-
-            // Création de l'image SVG Google Maps
-            Image googleMapsIcon = new Image(ICON_PATH + "googlemaps.svg", "Google Maps");
-            googleMapsIcon.setWidth("30px");
-            googleMapsIcon.setHeight("30px");
-            googleMapsIcon.getStyle().set("cursor", "pointer");
-
-            // Lien enveloppant l'icône
-            Anchor mapsLink = new Anchor(mapUrl, googleMapsIcon);
-            mapsLink.setTarget("_blank");
-            mapsLink.getStyle().set("margin-left", "10px");
-
-            locationValueLayout.add(mapsLink);
-        }
-
-        // Grille d'informations avec SVG
+        // Grille d'infos avec icônes
         Div infoGrid = new Div();
         infoGrid.getStyle()
                 .set("display", "grid")
-                .set("grid-template-columns", "repeat(auto-fit, minmax(300px, 1fr))")
-                .set("gap", "20px")
-                .set("width", "100%");
+                .set("grid-template-columns", "1fr 1fr")
+                .set("gap", "30px")
+                .set("width", "100%")
+                .set("margin", "40px 0");
 
         infoGrid.add(
-                createSvgInfoRow("date_time.svg", "Début", new Span(event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH)))),
-                createSvgInfoRow("date_fin.svg", "Fin", new Span(event.getDateFin().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH)))),
+                createSvgInfoRow("date_time.svg", "Date", new Span(event.getDateDebut().format(DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy", Locale.FRENCH)))),
+                createSvgInfoRow("clock_hour.svg", "Heure", new Span(event.getDateDebut().format(DateTimeFormatter.ofPattern("HH:mm")))),
                 createSvgInfoRow("ville.svg", "Ville", new Span(event.getVille())),
-                createSvgInfoRow("map.svg", "Lieu précis", locationValueLayout),
+                createSvgInfoRow("map.svg", "Lieu", createLocationComponent()),
                 createSvgInfoRow("argent.svg", "Tarif", new Span(event.getPrixUnitaire() + " MAD")),
-                createSvgInfoRow("people.svg", "Disponibilité", new Span(event.getCapaciteRestante() + " places sur " + event.getCapaciteMax()))
+                createSvgInfoRow("people.svg", "Places", new Span(event.getCapaciteRestante() + " / " + event.getCapaciteMax()))
         );
 
-        infoCard.add(infoGrid);
-
-        // Section Description avec icône
-        HorizontalLayout descHeader = new HorizontalLayout(
-                new Image(ICON_PATH + "description.svg", ""),
-                new H2("Description")
-        );
-        descHeader.setAlignItems(Alignment.CENTER);
-        descHeader.getStyle().set("margin-top", "30px");
+        // Description
+        H2 descTitle = new H2("À propos de l'événement");
+        descTitle.getStyle().set("color", BRAND_BLUE).set("font-weight", "800");
 
         Paragraph description = new Paragraph(event.getDescription());
         description.getStyle().set("color", "#444").set("line-height", "1.8").set("font-size", "1.1em");
 
-        // Section Organisateur
+        // Organisateur
         HorizontalLayout orgRow = new HorizontalLayout(
                 new Image(ICON_PATH + "organizer.svg", ""),
-                new Span("Organisé par : "),
-                new Span(event.getOrganisateur().getPrenom() + " " + event.getOrganisateur().getNom())
+                new Span("Organisé par : " + event.getOrganisateur().getPrenom() + " " + event.getOrganisateur().getNom())
         );
-        orgRow.getStyle().set("font-weight", "600").set("color", BRAND_BLUE).set("margin-top", "20px");
         orgRow.setAlignItems(Alignment.CENTER);
+        orgRow.getStyle().set("color", "#777").set("font-weight", "600").set("margin-top", "20px");
+        orgRow.getChildren().filter(c -> c instanceof Image).forEach(i -> ((Image)i).setWidth("22px"));
 
-        // Bouton de Réservation
-        Button reserveBtn = new Button("Réserver maintenant");
-        reserveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        scrollContent.add(category, title, new Hr(), infoGrid, descTitle, description, orgRow);
+
+        // Scroller pour le texte à droite
+        Scroller scroller = new Scroller(scrollContent);
+        scroller.setSizeFull();
+
+        // 4. BOUTON DE RÉSERVATION (TOUJOURS EN BAS)
+        Button reserveBtn = new Button("Réserver mes places");
         reserveBtn.setWidthFull();
-        reserveBtn.getStyle().set("background-color", BRAND_BLUE).set("height", "60px").set("font-size", "1.3em");
+        reserveBtn.getStyle()
+                .set("background-color", BRAND_BLUE)
+                .set("color", "white")
+                .set("height", "80px")
+                .set("font-weight", "900")
+                .set("font-size", "1.5em")
+                .set("border-radius", "0")
+                .set("cursor", "pointer");
+
         reserveBtn.addClickListener(e -> handleReservation());
 
         if (event.getCapaciteRestante() <= 0) {
             reserveBtn.setText("Événement Complet");
             reserveBtn.setEnabled(false);
-            reserveBtn.getStyle().set("background-color", "#ccc");
+            reserveBtn.getStyle().set("background-color", "#A0A0A0");
         }
 
-        infoCard.add(descHeader, description, orgRow, new Hr(), reserveBtn);
+        infoSide.add(scroller, reserveBtn);
 
-        mainContent.add(infoCard);
-        add(heroImage, mainContent);
+        // ASSEMBLAGE FINAL
+        mainSplit.add(imageSide, infoSide);
+        add(mainSplit);
+    }
+
+    private HorizontalLayout createLocationComponent() {
+        HorizontalLayout layout = new HorizontalLayout(new Span(event.getLieu()));
+        layout.setAlignItems(Alignment.CENTER);
+        if (event.getLatitude() != null && event.getLongitude() != null) {
+            String mapUrl = "https://www.google.com/maps/search/?api=1&query=" + event.getLatitude() + "," + event.getLongitude();
+            Image mapsIcon = new Image(ICON_PATH + "googlemaps.svg", "Maps");
+            mapsIcon.setWidth("22px");
+            Anchor mapsLink = new Anchor(mapUrl, mapsIcon);
+            mapsLink.setTarget("_blank");
+            layout.add(mapsLink);
+        }
+        return layout;
     }
 
     private HorizontalLayout createSvgInfoRow(String svgName, String label, com.vaadin.flow.component.Component valueComponent) {
         HorizontalLayout row = new HorizontalLayout();
         row.setAlignItems(Alignment.CENTER);
-        row.setSpacing(true);
-        row.getStyle().set("padding", "10px 0");
-
         Image icon = new Image(ICON_PATH + svgName, "");
-        icon.setWidth("28px");
-        icon.setHeight("28px");
-
+        icon.setWidth("32px");
         VerticalLayout textLayout = new VerticalLayout();
-        textLayout.setPadding(false);
-        textLayout.setSpacing(false);
-
+        textLayout.setPadding(false); textLayout.setSpacing(false);
         Span labelSpan = new Span(label);
-        labelSpan.getStyle().set("font-size", "0.85em").set("color", "#888").set("text-transform", "uppercase");
-
-        // Appliquer le style au composant de valeur
-        valueComponent.getStyle().set("font-weight", "600").set("color", BRAND_BLUE);
-
+        labelSpan.getStyle().set("font-size", "0.75em").set("color", "#999").set("text-transform", "uppercase").set("letter-spacing", "1px");
+        valueComponent.getStyle().set("font-weight", "700").set("color", BRAND_BLUE).set("font-size", "1em");
         textLayout.add(labelSpan, valueComponent);
         row.add(icon, textLayout);
         return row;
@@ -214,10 +221,10 @@ public class EventDetailView extends VerticalLayout implements HasUrlParameter<L
 
     private void handleReservation() {
         if (VaadinSession.isUserLoggedIn()) {
-            NavigationManager.goToReservationForm(eventId);
+            UI.getCurrent().navigate(ReservationFormView.class, eventId);
         } else {
-            Notification n = Notification.show("Veuillez vous connecter pour réserver.", 3000, Notification.Position.TOP_CENTER);
-            n.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+            Notification.show("Veuillez vous connecter pour réserver.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_PRIMARY);
             UI.getCurrent().navigate("login");
         }
     }
